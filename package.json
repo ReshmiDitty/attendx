@@ -1,0 +1,12 @@
+{
+  "name": "attendx",
+  "version": "1.0.0",
+  "description": "AttendX - Student Attendance Management System",
+  "main": "api/index.js",
+  "scripts": {
+    "start": "node api/index.js"
+  },
+  "engines": {
+    "node": ">=18.x"
+  }
+}

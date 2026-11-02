@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AttendX – Student Attendance Management System</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- =========================================================================
+       1. SPLIT-SCREEN LOGIN VIEW
+       ========================================================================= -->
+  <div id="login-view" class="login-container" style="display: none;">
+    <!-- Left Hero Banner -->
+    <div class="login-hero">
+      <div class="hero-brand">
+        <div class="brand-icon">A</div>
+        <span style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.02em;">AttendX</span>
+      </div>
+
+      <div class="hero-content">
+        <h1 class="hero-title">Student Attendance, Powered by C</h1>
+        <p class="hero-description">
+          A high-performance student attendance management platform running on a lightweight C HTTP server with standard file handling and zero external database dependencies.
+        </p>
+
+        <div class="hero-features">
+          <div class="feature-pill">
+            <i data-lucide="shield-check"></i>
+            <span>Atomic safe updates with timestamped copies in <code>/backups</code></span>
+          </div>
+          <div class="feature-pill">
+            <i data-lucide="cpu"></i>
+            <span>Pure C backend compiled with MinGW GCC & Mongoose HTTP</span>
+          </div>
+          <div class="feature-pill">
+            <i data-lucide="zap"></i>
+            <span>Sub-millisecond REST JSON API with cJSON</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-footer">
+        AttendX C Microproject • Viva Ready • C99/C11 Standard File I/O
+      </div>
+    </div>
+
+    <!-- Right Login Panel -->
+    <div class="login-form-panel">
+      <div class="login-card">
+        <div class="login-header">
+          <h2>Welcome Back</h2>
+          <p>Sign in to manage student records and track attendance.</p>
+        </div>
+
+        <!-- Quick Demo Accounts -->
+        <div style="margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">
+          Quick Demo Credentials:
+        </div>
+        <div class="demo-chips">
+          <button type="button" id="btn-demo-admin" class="demo-chip">
+            ⚡ Admin (admin123)
+          </button>
+          <button type="button" id="btn-demo-teacher" class="demo-chip">
+            ⚡ Teacher (teacher123)
+          </button>
+        </div>
+
+        <form id="login-form">
+          <div class="form-group">
+            <label class="form-label" for="login-username">Username</label>
+            <input type="text" id="login-username" class="form-control" placeholder="admin or teacher" required autofocus />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="login-password">Password</label>
+            <input type="password" id="login-password" class="form-control" placeholder="••••••••" required />
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top: 1.5rem;">
+            Sign In to AttendX
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       2. MAIN APP SHELL
+       ========================================================================= -->
+  <div id="app" style="display: none;">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="brand-icon">A</div>
+        <span class="brand-title">AttendX</span>
+        <span class="brand-badge">C99</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">Navigation</div>
+        <a class="nav-link active" data-page="dashboard">
+          <i data-lucide="layout-dashboard"></i>
+          <span>Dashboard</span>
+        </a>
+        <a class="nav-link" data-page="students">
+          <i data-lucide="users"></i>
+          <span>Students</span>
+        </a>
+        <a class="nav-link" data-page="attendance">
+          <i data-lucide="calendar-check-2"></i>
+          <span>Mark Attendance</span>
+        </a>
+        <a class="nav-link" data-page="reports">
+          <i data-lucide="bar-chart-3"></i>
+          <span>Reports & Analytics</span>
+        </a>
+
+        <div class="nav-section-title" id="nav-admin-title">Administration</div>
+        <a class="nav-link" data-page="settings" id="nav-settings">
+          <i data-lucide="settings"></i>
+          <span>Settings & Backups</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-badge">
+          <div class="user-avatar" id="sidebar-user-avatar">A</div>
+          <div class="user-info">
+            <div class="user-name" id="sidebar-user-name">admin</div>
+            <div class="user-role" id="sidebar-user-role">ADMINISTRATOR</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="btn-logout" title="Sign out" style="padding: 0.25rem;">
+            <i data-lucide="log-out"></i>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+      <!-- Topbar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="menu-toggle" id="menu-toggle-btn" aria-label="Toggle navigation">
+            <i data-lucide="menu"></i>
+          </button>
+          <h2 class="page-breadcrumb" id="page-title">Dashboard Overview</h2>
+        </div>
+
+        <div class="topbar-right">
+          <button class="btn btn-secondary btn-icon" id="theme-toggle-btn" aria-label="Toggle light/dark theme" title="Toggle theme">
+            <i data-lucide="sun"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- Content Container -->
+      <main class="content-container">
+
+        <!-- ===================================================================
+             PAGE 1: DASHBOARD
+             =================================================================== -->
+        <div id="page-dashboard" class="page-view active">
+          <!-- KPI Cards Grid -->
+          <div class="kpi-grid">
+            <div class="kpi-card kpi-info">
+              <div class="kpi-header">
+                <span class="kpi-title">Total Enrolled</span>
+                <div class="kpi-icon-wrap"><i data-lucide="users"></i></div>
+              </div>
+              <div class="kpi-value" id="kpi-total-students">0</div>
+              <div class="kpi-subtext">Active student records in C flatfile</div>
+            </div>
+
+            <div class="kpi-card kpi-success">
+              <div class="kpi-header">
+                <span class="kpi-title">Present Today</span>
+                <div class="kpi-icon-wrap"><i data-lucide="user-check"></i></div>
+              </div>
+              <div class="kpi-value" id="kpi-present-today">0</div>
+              <div class="kpi-subtext"><span class="trend-pill trend-up">On Campus</span> Recorded sessions</div>
+            </div>
+
+            <div class="kpi-card kpi-danger">
+              <div class="kpi-header">
+                <span class="kpi-title">Absent Today</span>
+                <div class="kpi-icon-wrap"><i data-lucide="user-x"></i></div>
+              </div>
+              <div class="kpi-value" id="kpi-absent-today">0</div>
+              <div class="kpi-subtext">Students unexcused or absent</div>
+            </div>
+
+            <div class="kpi-card kpi-warning">
+              <div class="kpi-header">
+                <span class="kpi-title">Overall Rate</span>
+                <div class="kpi-icon-wrap"><i data-lucide="percent"></i></div>
+              </div>
+              <div class="kpi-value" id="kpi-overall-rate">0%</div>
+              <div class="kpi-subtext">Across 30 calendar days</div>
+            </div>
+          </div>
+
+          <!-- Charts Grid (Row 1) -->
+          <div class="dashboard-grid">
+            <!-- Attendance Trend Line Chart -->
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <h3 class="card-title"><i data-lucide="trending-up"></i> Attendance Trend</h3>
+                  <p class="card-subtitle">Daily aggregate attendance trajectory</p>
+                </div>
+                <div style="display: flex; gap: 0.35rem;">
+                  <button class="btn btn-sm btn-primary btn-trend-toggle" data-days="7" onclick="App.setTrendDays(7)">7 Days</button>
+                  <button class="btn btn-sm btn-secondary btn-trend-toggle" data-days="30" onclick="App.setTrendDays(30)">30 Days</button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="chart-wrapper">
+                  <canvas id="trend-chart"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Present vs Absent Doughnut Chart -->
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <h3 class="card-title"><i data-lucide="pie-chart"></i> Today's Breakdown</h3>
+                  <p class="card-subtitle">Present, Absent & Late ratios</p>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="chart-wrapper">
+                  <canvas id="doughnut-chart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts & Alerts Grid (Row 2) -->
+          <div class="dashboard-grid-equal">
+            <!-- Section-wise Bar Chart -->
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <h3 class="card-title"><i data-lucide="bar-chart-2"></i> Section-Wise Performance</h3>
+                  <p class="card-subtitle">Comparative average attendance by section</p>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="chart-wrapper">
+                  <canvas id="section-chart"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Low-Attendance Alert Panel (< 75%) -->
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <h3 class="card-title" style="color: var(--danger);"><i data-lucide="alert-triangle"></i> Low Attendance Watchlist (&lt; 75%)</h3>
+                  <p class="card-subtitle">Students falling behind mandatory threshold</p>
+                </div>
+              </div>
+              <div class="card-body" id="low-attendance-container" style="max-height: 310px; overflow-y: auto;">
+                <!-- Populated via JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Activity Feed -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h3 class="card-title"><i data-lucide="history"></i> Recent Activity Log</h3>
+                <p class="card-subtitle">Real-time audit events recorded in <code>data/audit_log.txt</code></p>
+              </div>
+            </div>
+            <div class="card-body" id="activity-feed-container">
+              <!-- Populated via JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================================================================
+             PAGE 2: STUDENTS DIRECTORY
+             =================================================================== -->
+        <div id="page-students" class="page-view">
+          <div class="toolbar">
+            <div class="toolbar-left">
+              <div class="search-input-wrap">
+                <i data-lucide="search"></i>
+                <input type="text" id="students-search-input" class="form-control" placeholder="Search by name, roll no, or email..." />
+              </div>
+              <select id="students-section-filter" class="form-control" style="width: 160px;">
+                <option value="all">All Sections</option>
+              </select>
+            </div>
+
+            <div class="toolbar-right">
+              <button class="btn btn-secondary" onclick="App.openCSVImportModal()">
+                <i data-lucide="upload"></i> Import CSV
+              </button>
+              <button class="btn btn-secondary" onclick="App.triggerCSVExport('students')">
+                <i data-lucide="download"></i> Export CSV
+              </button>
+              <button class="btn btn-primary" onclick="App.openAddStudentModal()">
+                <i data-lucide="user-plus"></i> Add Student
+              </button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th class="sortable" onclick="App.sortStudents('roll_no')">Roll No ↕</th>
+                    <th class="sortable" onclick="App.sortStudents('name')">Student Name ↕</th>
+                    <th class="sortable" onclick="App.sortStudents('section')">Section ↕</th>
+                    <th>Phone</th>
+                    <th class="sortable" onclick="App.sortStudents('joined_on')">Joined On ↕</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="students-table-body">
+                  <!-- Loaded via JS -->
+                </tbody>
+              </table>
+            </div>
+
+            <div class="card-body" style="padding-top: 0;">
+              <div class="pagination" id="students-pagination">
+                <!-- Pagination buttons -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================================================================
+             PAGE 3: MARK ATTENDANCE
+             =================================================================== -->
+        <div id="page-attendance" class="page-view">
+          <!-- Warning / Notice Banner -->
+          <div id="attendance-notice-banner" style="display: none; padding: 0.85rem 1.25rem; border-radius: var(--radius-md); background: var(--primary-light); color: var(--primary-text); margin-bottom: 1.25rem; border: 1px solid rgba(99, 102, 241, 0.3); display: flex; align-items: center; gap: 0.75rem;">
+            <!-- Content set dynamically -->
+          </div>
+
+          <div class="toolbar">
+            <div class="toolbar-left">
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <label class="form-label" style="margin-bottom: 0;" for="attendance-date-picker">Date:</label>
+                <input type="date" id="attendance-date-picker" class="form-control" style="width: 170px;" />
+              </div>
+
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <label class="form-label" style="margin-bottom: 0;" for="mark-section-select">Section:</label>
+                <select id="mark-section-select" class="form-control" style="width: 160px;">
+                  <option value="all">All Sections</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="toolbar-right">
+              <button class="btn btn-secondary btn-sm" onclick="App.markAllStatus('Present')">
+                <i data-lucide="check-check"></i> Mark All Present
+              </button>
+              <button class="btn btn-secondary btn-sm" onclick="App.markAllStatus('Absent')">
+                <i data-lucide="x"></i> Mark All Absent
+              </button>
+            </div>
+          </div>
+
+          <!-- Student Attendance List Cards -->
+          <div id="attendance-marking-container">
+            <!-- Populated via JS -->
+          </div>
+
+          <!-- Sticky Bottom Summary Bar -->
+          <div class="sticky-footer">
+            <div class="attendance-summary-pills">
+              <div class="summary-pill">
+                <span>Total:</span>
+                <span class="badge badge-neutral" id="att-count-total">0</span>
+              </div>
+              <div class="summary-pill">
+                <span>Present:</span>
+                <span class="badge badge-present" id="att-count-present">0</span>
+              </div>
+              <div class="summary-pill">
+                <span>Absent:</span>
+                <span class="badge badge-absent" id="att-count-absent">0</span>
+              </div>
+              <div class="summary-pill">
+                <span>Late:</span>
+                <span class="badge badge-late" id="att-count-late">0</span>
+              </div>
+            </div>
+
+            <button class="btn btn-primary btn-lg" id="btn-save-attendance" onclick="App.handleSaveAttendance()">
+              <i data-lucide="check"></i> Submit Attendance
+            </button>
+          </div>
+        </div>
+
+        <!-- ===================================================================
+             PAGE 4: REPORTS & ANALYTICS
+             =================================================================== -->
+        <div id="page-reports" class="page-view">
+          <div class="toolbar">
+            <div class="toolbar-left">
+              <div class="search-input-wrap">
+                <i data-lucide="search"></i>
+                <input type="text" id="reports-search-input" class="form-control" placeholder="Search student name or roll..." />
+              </div>
+              <select id="reports-section-filter" class="form-control" style="width: 160px;">
+                <option value="all">All Sections</option>
+              </select>
+            </div>
+
+            <div class="toolbar-right">
+              <button class="btn btn-secondary" onclick="App.triggerCSVExport('students')">
+                <i data-lucide="download"></i> Export CSV
+              </button>
+              <button class="btn btn-secondary" onclick="window.print()">
+                <i data-lucide="printer"></i> Print Report
+              </button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Roll No</th>
+                    <th>Student Name</th>
+                    <th>Section</th>
+                    <th>Total Sessions</th>
+                    <th>Present</th>
+                    <th>Absent</th>
+                    <th>Late</th>
+                    <th>Attendance %</th>
+                  </tr>
+                </thead>
+                <tbody id="reports-table-body">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================================================================
+             PAGE 5: SETTINGS & BACKUPS (ADMIN)
+             =================================================================== -->
+        <div id="page-settings" class="page-view">
+          <div class="tab-nav">
+            <button class="tab-btn active" data-tab="tab-general" onclick="App.switchSettingsTab('tab-general')">General</button>
+            <button class="tab-btn" data-tab="tab-security" onclick="App.switchSettingsTab('tab-security')">Security & Password</button>
+            <button class="tab-btn" data-tab="tab-users" onclick="App.switchSettingsTab('tab-users')">User Management</button>
+            <button class="tab-btn" data-tab="tab-backups" onclick="App.switchSettingsTab('tab-backups')">Backups & Data</button>
+            <button class="tab-btn" data-tab="tab-audit" onclick="App.switchSettingsTab('tab-audit')">Audit Log</button>
+          </div>
+
+          <!-- Tab 1: General Settings -->
+          <div class="tab-pane active" id="tab-general">
+            <div class="card" style="max-width: 640px;">
+              <div class="card-header">
+                <h3 class="card-title"><i data-lucide="sliders"></i> Institution & Attendance Policies</h3>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label class="form-label">Institution / Department Name</label>
+                  <input type="text" class="form-control" value="Department of Computer Science & Engineering" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Current Academic Semester</label>
+                  <input type="text" class="form-control" value="Fall 2026 Semester" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Attendance Warning Threshold (%)</label>
+                  <input type="number" class="form-control" value="75" min="50" max="100" />
+                  <span style="font-size: 0.75rem; color: var(--text-muted);">Students below this percentage are highlighted in red across all reports.</span>
+                </div>
+                <button class="btn btn-primary" onclick="App.showToast('Settings saved successfully', 'success')">
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 2: Security & Password -->
+          <div class="tab-pane" id="tab-security">
+            <div class="card" style="max-width: 520px;">
+              <div class="card-header">
+                <h3 class="card-title"><i data-lucide="lock"></i> Change Password</h3>
+              </div>
+              <div class="card-body">
+                <form id="form-change-password">
+                  <div class="form-group">
+                    <label class="form-label" for="pwd-current">Current Password</label>
+                    <input type="password" id="pwd-current" class="form-control" required />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="pwd-new">New Password</label>
+                    <input type="password" id="pwd-new" class="form-control" required />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="pwd-confirm">Confirm New Password</label>
+                    <input type="password" id="pwd-confirm" class="form-control" required />
+                  </div>
+                  <button type="submit" class="btn btn-primary">Update Password</button>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 3: User Management -->
+          <div class="tab-pane" id="tab-users">
+            <div class="dashboard-grid-equal">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title"><i data-lucide="user-plus"></i> Add User / Teacher</h3>
+                </div>
+                <div class="card-body">
+                  <form id="form-add-user">
+                    <div class="form-group">
+                      <label class="form-label">Username</label>
+                      <input type="text" id="new-user-username" class="form-control" required />
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Password</label>
+                      <input type="password" id="new-user-password" class="form-control" required />
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Role</label>
+                      <select id="new-user-role" class="form-control">
+                        <option value="teacher">Teacher</option>
+                        <option value="admin">Administrator</option>
+                      </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create User Account</button>
+                  </form>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title"><i data-lucide="users"></i> Existing User Accounts</h3>
+                </div>
+                <div class="table-responsive">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th>Username</th>
+                        <th>Role</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="users-table-body">
+                      <!-- Populated via JS -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 4: Backups & Data -->
+          <div class="tab-pane" id="tab-backups">
+            <div class="card" style="max-width: 640px;">
+              <div class="card-header">
+                <h3 class="card-title"><i data-lucide="archive"></i> Safe File Storage & Backups</h3>
+              </div>
+              <div class="card-body">
+                <p style="color: var(--text-secondary); margin-bottom: 1.25rem;">
+                  AttendX operates with 100% C standard file operations. Before any record update or deletion, the system automatically writes a timestamped binary copy to <code>/backups</code>.
+                </p>
+
+                <div style="background: var(--bg-subtle); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 1.5rem;">
+                  <div style="font-weight: 600; margin-bottom: 0.25rem;">Storage Locations:</div>
+                  <div style="font-size: 0.85rem; font-family: var(--font-mono); color: var(--text-muted);">
+                    Data Directory   : /data (students.txt, attendance.txt, users.txt, audit_log.txt)<br>
+                    Backup Directory : /backups (*_YYYYMMDD_HHMMSS.bak)
+                  </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="App.handleManualBackup()">
+                  <i data-lucide="save"></i> Trigger Manual Full System Backup Now
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 5: Audit Log -->
+          <div class="tab-pane" id="tab-audit">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title"><i data-lucide="scroll"></i> System Audit Log (Append-Only)</h3>
+              </div>
+              <div class="table-responsive">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Timestamp</th>
+                      <th>User</th>
+                      <th>Action Details</th>
+                    </tr>
+                  </thead>
+                  <tbody id="settings-audit-body">
+                    <!-- Populated via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODALS
+       ========================================================================= -->
+
+  <!-- Add / Edit Student Modal -->
+  <div class="modal-overlay" id="modal-student">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-student-title">Add New Student</h3>
+        <button class="btn btn-ghost btn-sm" onclick="App.closeModal('modal-student')">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <form id="student-form">
+        <input type="hidden" id="student-form-mode" value="add" />
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="student-roll">Roll Number *</label>
+            <input type="text" id="student-roll" class="form-control" placeholder="e.g. CS101" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="student-name">Full Name *</label>
+            <input type="text" id="student-name" class="form-control" placeholder="e.g. John Doe" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="student-section">Section *</label>
+            <input type="text" id="student-section" class="form-control" placeholder="e.g. CS-A" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="student-email">Email Address</label>
+            <input type="email" id="student-email" class="form-control" placeholder="student@attendx.edu" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="student-phone">Phone Number</label>
+            <input type="text" id="student-phone" class="form-control" placeholder="+91 98765 43210" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-student')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Student</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal-overlay" id="modal-delete-student">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" style="color: var(--danger);">Confirm Student Deletion</h3>
+        <button class="btn btn-ghost btn-sm" onclick="App.closeModal('modal-delete-student')">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="delete-student-roll" />
+        <p style="margin-bottom: 1rem;">
+          Are you sure you want to permanently delete student: <strong id="delete-student-name"></strong>?
+        </p>
+        <div style="background: var(--bg-subtle); padding: 0.75rem; border-radius: var(--radius-md); font-size: 0.825rem; color: var(--text-muted); border-left: 3px solid var(--warning);">
+          <i data-lucide="shield"></i> Safe File Copy: An automatic timestamped backup of <code>students.txt</code> will be safely preserved in <code>/backups</code>.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-delete-student')">Cancel</button>
+        <button type="button" class="btn btn-danger" onclick="App.handleDeleteStudentConfirmed()">Delete Permanently</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Student Profile & Calendar Heatmap Modal -->
+  <div class="modal-overlay" id="modal-profile">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title" id="profile-student-name">Student Profile</h3>
+          <p style="font-size: 0.8rem; color: var(--text-muted);" id="profile-student-meta"></p>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <button class="btn btn-secondary btn-sm" id="btn-toggle-edit-profile" onclick="App.toggleProfileEditMode()">
+            <i data-lucide="edit"></i> <span id="btn-edit-profile-text">Edit Details</span>
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="App.closeModal('modal-profile')">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+      </div>
+      <div class="modal-body">
+
+        <!-- Student Details Card (View Mode) -->
+        <div class="profile-details-card" id="profile-details-view">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem;">
+            <h4 style="font-size: 0.9rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 0.4rem;">
+              <i data-lucide="user-check"></i> Student Information
+            </h4>
+            <span id="profile-status-badge" class="badge badge-present">Good Standing</span>
+          </div>
+
+          <div class="profile-details-grid">
+            <div class="profile-detail-item">
+              <span class="profile-detail-label">Roll Number</span>
+              <span class="profile-detail-val" id="profile-val-roll">-</span>
+            </div>
+            <div class="profile-detail-item">
+              <span class="profile-detail-label">Full Name</span>
+              <span class="profile-detail-val" id="profile-val-name">-</span>
+            </div>
+            <div class="profile-detail-item">
+              <span class="profile-detail-label">Academic Section</span>
+              <span class="profile-detail-val" id="profile-val-section">-</span>
+            </div>
+            <div class="profile-detail-item">
+              <span class="profile-detail-label">Email Address</span>
+              <span class="profile-detail-val" id="profile-val-email">-</span>
+            </div>
+            <div class="profile-detail-item">
+              <span class="profile-detail-label">Phone Number</span>
+              <span class="profile-detail-val" id="profile-val-phone">-</span>
+            </div>
+            <div class="profile-detail-item">
+              <span class="profile-detail-label">Date Enrolled</span>
+              <span class="profile-detail-val" id="profile-val-joined">-</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Student Details Form (Edit Mode - Hidden by Default) -->
+        <div class="profile-details-card" id="profile-details-edit" style="display: none;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem;">
+            <h4 style="font-size: 0.9rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 0.4rem;">
+              <i data-lucide="edit-3"></i> Edit Student Information
+            </h4>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">Changes update data/students.txt atomically</span>
+          </div>
+
+          <form id="form-profile-inline-edit" onsubmit="App.saveProfileInlineEdit(event)">
+            <div class="profile-edit-form">
+              <div class="form-group" style="margin-bottom: 0.75rem;">
+                <label class="form-label" for="profile-edit-name">Full Name *</label>
+                <input type="text" id="profile-edit-name" class="form-control" required />
+              </div>
+              <div class="form-group" style="margin-bottom: 0.75rem;">
+                <label class="form-label" for="profile-edit-section">Section *</label>
+                <input type="text" id="profile-edit-section" class="form-control" required />
+              </div>
+              <div class="form-group" style="margin-bottom: 0.75rem;">
+                <label class="form-label" for="profile-edit-email">Email Address</label>
+                <input type="email" id="profile-edit-email" class="form-control" />
+              </div>
+              <div class="form-group" style="margin-bottom: 0.75rem;">
+                <label class="form-label" for="profile-edit-phone">Phone Number</label>
+                <input type="text" id="profile-edit-phone" class="form-control" />
+              </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="App.toggleProfileEditMode(false)">Cancel</button>
+              <button type="submit" class="btn btn-primary btn-sm">
+                <i data-lucide="check"></i> Save Changes to Database
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Quick stats badges -->
+        <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 1.25rem;">
+          <div class="kpi-card" style="padding: 0.75rem;">
+            <div class="kpi-title">Rate</div>
+            <div class="kpi-value" id="profile-rate" style="font-size: 1.5rem;">0%</div>
+          </div>
+          <div class="kpi-card" style="padding: 0.75rem;">
+            <div class="kpi-title">Total Days</div>
+            <div class="kpi-value" id="profile-total-classes" style="font-size: 1.5rem;">0</div>
+          </div>
+          <div class="kpi-card kpi-success" style="padding: 0.75rem;">
+            <div class="kpi-title">Present</div>
+            <div class="kpi-value" id="profile-present-count" style="font-size: 1.5rem;">0</div>
+          </div>
+          <div class="kpi-card kpi-danger" style="padding: 0.75rem;">
+            <div class="kpi-title">Absent</div>
+            <div class="kpi-value" id="profile-absent-count" style="font-size: 1.5rem;">0</div>
+          </div>
+        </div>
+
+        <!-- GitHub Style Calendar Heatmap -->
+        <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+          <i data-lucide="calendar"></i> 35-Day Attendance Heatmap Matrix
+        </h4>
+        <div id="profile-heatmap" class="heatmap-container" style="margin-bottom: 1.5rem;">
+          <!-- Rendered via JS -->
+        </div>
+
+        <!-- Attendance History Table -->
+        <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem;">Attendance History</h4>
+        <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Remarks</th>
+              </tr>
+            </thead>
+            <tbody id="profile-history-body">
+              <!-- Populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-profile')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CSV Import Modal -->
+  <div class="modal-overlay" id="modal-import-csv">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title"><i data-lucide="file-spreadsheet"></i> Bulk Import Students (CSV)</h3>
+        <button class="btn btn-ghost btn-sm" onclick="App.closeModal('modal-import-csv')">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+          Upload a CSV or text file containing student rows formatted as:<br>
+          <code>roll_no, name, section, email, phone</code> (or pipe-delimited).
+        </p>
+
+        <div class="form-group">
+          <input type="file" id="csv-file-input" accept=".csv, .txt" class="form-control" onchange="App.handleCSVFileSelected(event)" />
+        </div>
+
+        <div style="background: var(--bg-subtle); padding: 0.75rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem; max-height: 120px; overflow-y: auto; white-space: pre-wrap;" id="csv-preview-text">
+          No file selected yet.
+        </div>
+
+        <div id="csv-import-results" style="display: none; margin-top: 1rem;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-import-csv')">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="App.executeCSVImport()">Import Students</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container"></div>
+
+  <!-- Third-party & Application Scripts -->
+  <script src="js/chart.umd.js"></script>
+  <script src="js/lucide.min.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

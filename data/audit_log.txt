@@ -40,3 +40,4 @@
 2026-11-02 21:59:17|teacher|User teacher logged in successfully (teacher)
 2026-11-02 22:01:06|teacher|User logged out
 2026-11-02 22:01:11|admin|User admin logged in successfully (admin)
+2026-11-02 22:37:36|admin|Recorded attendance batch for date 2026-11-02 (15 records)
