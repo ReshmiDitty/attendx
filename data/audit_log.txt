@@ -1,0 +1,42 @@
+2026-11-02 16:29:20|system|Created user admin with role admin
+2026-11-02 16:29:20|system|Created user teacher with role teacher
+2026-11-02 16:29:20|system|Added student Aarav Sharma (CS101, CS-A)
+2026-11-02 16:29:20|system|Added student Ananya Iyer (CS102, CS-A)
+2026-11-02 16:29:20|system|Added student Rohan Verma (CS103, CS-A)
+2026-11-02 16:29:20|system|Added student Diya Patel (CS104, CS-A)
+2026-11-02 16:29:20|system|Added student Kabir Khan (CS105, CS-A)
+2026-11-02 16:29:20|system|Added student Ishaan Roy (CS201, CS-B)
+2026-11-02 16:29:20|system|Added student Sneha Nair (CS202, CS-B)
+2026-11-02 16:29:20|system|Added student Vikram Malhotra (CS203, CS-B)
+2026-11-02 16:29:20|system|Added student Pooja Reddy (CS204, CS-B)
+2026-11-02 16:29:20|system|Added student Aditya Joshi (CS205, CS-B)
+2026-11-02 16:29:20|system|Added student Meera Kulkarni (IT301, IT-A)
+2026-11-02 16:29:20|system|Added student Devendra Sen (IT302, IT-A)
+2026-11-02 16:29:20|system|Added student Tanya Gupta (IT303, IT-A)
+2026-11-02 16:29:20|system|Added student Farhan Sheikh (IT304, IT-A)
+2026-11-02 16:29:20|system|Added student Rhea D'Souza (IT305, IT-A)
+2026-11-02 16:29:20|system|Seeded 15 sample students and 30-day realistic attendance records
+2026-11-02 17:01:16|admin|User admin logged in successfully (admin)
+2026-11-02 17:02:15|system|Manual full system backup created successfully
+2026-11-02 17:03:37|admin|User admin logged in successfully (admin)
+2026-11-02 17:04:26|admin|Added student Test Student (CS999, CS-A)
+2026-11-02 17:04:42|admin|Updated student details for CS999
+2026-11-02 17:05:08|admin|Recorded attendance batch for date 2026-11-02 (2 records)
+2026-11-02 17:05:35|admin|Deleted student with Roll No: CS999
+2026-11-02 17:07:48|admin|Added student John Doe (CS901, CS-A)
+2026-11-02 17:08:18|admin|Deleted student with Roll No: CS901
+2026-11-02 20:56:04|admin|User admin logged in successfully (admin)
+2026-11-02 21:15:22|system|Manual full system backup created successfully
+2026-11-02 21:15:22|test_runner|Added student Viva Demo Student (CS888, CS-A)
+2026-11-02 21:15:22|test_runner|Updated student details for CS888
+2026-11-02 21:15:22|test_runner|Recorded attendance batch for date 2026-11-02 (1 records)
+2026-11-02 21:15:22|test_runner|Deleted student with Roll No: CS888
+2026-11-02 21:16:16|system|Manual full system backup created successfully
+2026-11-02 21:16:16|test_runner|Added student Viva Demo Student (CS888, CS-A)
+2026-11-02 21:16:16|test_runner|Updated student details for CS888
+2026-11-02 21:16:16|test_runner|Recorded attendance batch for date 2026-11-02 (1 records)
+2026-11-02 21:16:16|test_runner|Deleted student with Roll No: CS888
+2026-11-02 21:28:06|admin|User admin logged in successfully (admin)
+2026-11-02 21:59:17|teacher|User teacher logged in successfully (teacher)
+2026-11-02 22:01:06|teacher|User logged out
+2026-11-02 22:01:11|admin|User admin logged in successfully (admin)

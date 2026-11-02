@@ -1,0 +1,465 @@
+2026-09-28|CS101|Present|Regular attendance
+2026-09-28|CS102|Present|Regular attendance
+2026-09-28|CS103|Present|Regular attendance
+2026-09-28|CS104|Absent|Family function / sick
+2026-09-28|CS105|Late|Bus delay 15m
+2026-09-28|CS201|Present|Regular attendance
+2026-09-28|CS202|Present|Regular attendance
+2026-09-28|CS203|Present|Regular attendance
+2026-09-28|CS204|Present|Regular attendance
+2026-09-28|CS205|Present|Regular attendance
+2026-09-28|IT301|Present|Regular attendance
+2026-09-28|IT302|Absent|Family function / sick
+2026-09-28|IT303|Present|Regular attendance
+2026-09-28|IT304|Present|Regular attendance
+2026-09-28|IT305|Present|Regular attendance
+2026-09-29|CS101|Present|Regular attendance
+2026-09-29|CS102|Present|Regular attendance
+2026-09-29|CS103|Present|Regular attendance
+2026-09-29|CS104|Present|Regular attendance
+2026-09-29|CS105|Absent|Medical leave / Unexcused
+2026-09-29|CS201|Present|Regular attendance
+2026-09-29|CS202|Present|Regular attendance
+2026-09-29|CS203|Present|Regular attendance
+2026-09-29|CS204|Present|Regular attendance
+2026-09-29|CS205|Absent|Family function / sick
+2026-09-29|IT301|Absent|Family function / sick
+2026-09-29|IT302|Present|Regular attendance
+2026-09-29|IT303|Present|Regular attendance
+2026-09-29|IT304|Absent|Personal reasons
+2026-09-29|IT305|Present|Regular attendance
+2026-09-30|CS101|Present|Regular attendance
+2026-09-30|CS102|Present|Regular attendance
+2026-09-30|CS103|Present|Regular attendance
+2026-09-30|CS104|Present|Regular attendance
+2026-09-30|CS105|Present|Regular attendance
+2026-09-30|CS201|Present|Regular attendance
+2026-09-30|CS202|Present|Regular attendance
+2026-09-30|CS203|Present|Regular attendance
+2026-09-30|CS204|Present|Regular attendance
+2026-09-30|CS205|Present|Regular attendance
+2026-09-30|IT301|Late|Delayed arrival
+2026-09-30|IT302|Present|Regular attendance
+2026-09-30|IT303|Present|Regular attendance
+2026-09-30|IT304|Late|Traffic delay
+2026-09-30|IT305|Present|Regular attendance
+2026-10-01|CS101|Present|Regular attendance
+2026-10-01|CS102|Absent|Family function / sick
+2026-10-01|CS103|Late|Delayed arrival
+2026-10-01|CS104|Present|Regular attendance
+2026-10-01|CS105|Absent|Medical leave / Unexcused
+2026-10-01|CS201|Present|Regular attendance
+2026-10-01|CS202|Present|Regular attendance
+2026-10-01|CS203|Present|Regular attendance
+2026-10-01|CS204|Present|Regular attendance
+2026-10-01|CS205|Late|Delayed arrival
+2026-10-01|IT301|Present|Regular attendance
+2026-10-01|IT302|Present|Regular attendance
+2026-10-01|IT303|Present|Regular attendance
+2026-10-01|IT304|Present|Regular attendance
+2026-10-01|IT305|Present|Regular attendance
+2026-10-02|CS101|Present|Regular attendance
+2026-10-02|CS102|Present|Regular attendance
+2026-10-02|CS103|Present|Regular attendance
+2026-10-02|CS104|Present|Regular attendance
+2026-10-02|CS105|Present|Regular attendance
+2026-10-02|CS201|Present|Regular attendance
+2026-10-02|CS202|Present|Regular attendance
+2026-10-02|CS203|Present|Regular attendance
+2026-10-02|CS204|Present|Regular attendance
+2026-10-02|CS205|Present|Regular attendance
+2026-10-02|IT301|Present|Regular attendance
+2026-10-02|IT302|Present|Regular attendance
+2026-10-02|IT303|Present|Regular attendance
+2026-10-02|IT304|Present|Regular attendance
+2026-10-02|IT305|Present|Regular attendance
+2026-10-03|CS101|Absent|Family function / sick
+2026-10-03|CS102|Present|Regular attendance
+2026-10-03|CS103|Present|Regular attendance
+2026-10-03|CS104|Present|Regular attendance
+2026-10-03|CS105|Late|Bus delay 15m
+2026-10-03|CS201|Present|Regular attendance
+2026-10-03|CS202|Present|Regular attendance
+2026-10-03|CS203|Absent|Family function / sick
+2026-10-03|CS204|Present|Regular attendance
+2026-10-03|CS205|Present|Regular attendance
+2026-10-03|IT301|Present|Regular attendance
+2026-10-03|IT302|Present|Regular attendance
+2026-10-03|IT303|Absent|Family function / sick
+2026-10-03|IT304|Absent|Personal reasons
+2026-10-03|IT305|Absent|Family function / sick
+2026-10-05|CS101|Present|Regular attendance
+2026-10-05|CS102|Present|Regular attendance
+2026-10-05|CS103|Present|Regular attendance
+2026-10-05|CS104|Present|Regular attendance
+2026-10-05|CS105|Absent|Medical leave / Unexcused
+2026-10-05|CS201|Present|Regular attendance
+2026-10-05|CS202|Present|Regular attendance
+2026-10-05|CS203|Present|Regular attendance
+2026-10-05|CS204|Present|Regular attendance
+2026-10-05|CS205|Present|Regular attendance
+2026-10-05|IT301|Present|Regular attendance
+2026-10-05|IT302|Present|Regular attendance
+2026-10-05|IT303|Late|Delayed arrival
+2026-10-05|IT304|Late|Traffic delay
+2026-10-05|IT305|Present|Regular attendance
+2026-10-06|CS101|Present|Regular attendance
+2026-10-06|CS102|Present|Regular attendance
+2026-10-06|CS103|Present|Regular attendance
+2026-10-06|CS104|Present|Regular attendance
+2026-10-06|CS105|Present|Regular attendance
+2026-10-06|CS201|Present|Regular attendance
+2026-10-06|CS202|Present|Regular attendance
+2026-10-06|CS203|Present|Regular attendance
+2026-10-06|CS204|Present|Regular attendance
+2026-10-06|CS205|Present|Regular attendance
+2026-10-06|IT301|Present|Regular attendance
+2026-10-06|IT302|Present|Regular attendance
+2026-10-06|IT303|Present|Regular attendance
+2026-10-06|IT304|Present|Regular attendance
+2026-10-06|IT305|Present|Regular attendance
+2026-10-07|CS101|Absent|Family function / sick
+2026-10-07|CS102|Present|Regular attendance
+2026-10-07|CS103|Present|Regular attendance
+2026-10-07|CS104|Absent|Family function / sick
+2026-10-07|CS105|Absent|Medical leave / Unexcused
+2026-10-07|CS201|Present|Regular attendance
+2026-10-07|CS202|Present|Regular attendance
+2026-10-07|CS203|Present|Regular attendance
+2026-10-07|CS204|Present|Regular attendance
+2026-10-07|CS205|Present|Regular attendance
+2026-10-07|IT301|Present|Regular attendance
+2026-10-07|IT302|Present|Regular attendance
+2026-10-07|IT303|Present|Regular attendance
+2026-10-07|IT304|Present|Regular attendance
+2026-10-07|IT305|Present|Regular attendance
+2026-10-08|CS101|Present|Regular attendance
+2026-10-08|CS102|Present|Regular attendance
+2026-10-08|CS103|Late|Delayed arrival
+2026-10-08|CS104|Present|Regular attendance
+2026-10-08|CS105|Present|Regular attendance
+2026-10-08|CS201|Present|Regular attendance
+2026-10-08|CS202|Present|Regular attendance
+2026-10-08|CS203|Present|Regular attendance
+2026-10-08|CS204|Present|Regular attendance
+2026-10-08|CS205|Present|Regular attendance
+2026-10-08|IT301|Present|Regular attendance
+2026-10-08|IT302|Present|Regular attendance
+2026-10-08|IT303|Present|Regular attendance
+2026-10-08|IT304|Absent|Personal reasons
+2026-10-08|IT305|Present|Regular attendance
+2026-10-09|CS101|Present|Regular attendance
+2026-10-09|CS102|Present|Regular attendance
+2026-10-09|CS103|Present|Regular attendance
+2026-10-09|CS104|Present|Regular attendance
+2026-10-09|CS105|Late|Bus delay 15m
+2026-10-09|CS201|Present|Regular attendance
+2026-10-09|CS202|Present|Regular attendance
+2026-10-09|CS203|Late|Delayed arrival
+2026-10-09|CS204|Present|Regular attendance
+2026-10-09|CS205|Late|Delayed arrival
+2026-10-09|IT301|Present|Regular attendance
+2026-10-09|IT302|Present|Regular attendance
+2026-10-09|IT303|Present|Regular attendance
+2026-10-09|IT304|Late|Traffic delay
+2026-10-09|IT305|Present|Regular attendance
+2026-10-10|CS101|Present|Regular attendance
+2026-10-10|CS102|Present|Regular attendance
+2026-10-10|CS103|Late|Delayed arrival
+2026-10-10|CS104|Late|Delayed arrival
+2026-10-10|CS105|Absent|Medical leave / Unexcused
+2026-10-10|CS201|Present|Regular attendance
+2026-10-10|CS202|Present|Regular attendance
+2026-10-10|CS203|Present|Regular attendance
+2026-10-10|CS204|Present|Regular attendance
+2026-10-10|CS205|Present|Regular attendance
+2026-10-10|IT301|Absent|Family function / sick
+2026-10-10|IT302|Present|Regular attendance
+2026-10-10|IT303|Late|Delayed arrival
+2026-10-10|IT304|Present|Regular attendance
+2026-10-10|IT305|Present|Regular attendance
+2026-10-12|CS101|Absent|Family function / sick
+2026-10-12|CS102|Present|Regular attendance
+2026-10-12|CS103|Present|Regular attendance
+2026-10-12|CS104|Present|Regular attendance
+2026-10-12|CS105|Present|Regular attendance
+2026-10-12|CS201|Late|Delayed arrival
+2026-10-12|CS202|Present|Regular attendance
+2026-10-12|CS203|Present|Regular attendance
+2026-10-12|CS204|Present|Regular attendance
+2026-10-12|CS205|Present|Regular attendance
+2026-10-12|IT301|Present|Regular attendance
+2026-10-12|IT302|Present|Regular attendance
+2026-10-12|IT303|Present|Regular attendance
+2026-10-12|IT304|Present|Regular attendance
+2026-10-12|IT305|Absent|Family function / sick
+2026-10-13|CS101|Present|Regular attendance
+2026-10-13|CS102|Present|Regular attendance
+2026-10-13|CS103|Present|Regular attendance
+2026-10-13|CS104|Present|Regular attendance
+2026-10-13|CS105|Absent|Medical leave / Unexcused
+2026-10-13|CS201|Present|Regular attendance
+2026-10-13|CS202|Present|Regular attendance
+2026-10-13|CS203|Present|Regular attendance
+2026-10-13|CS204|Present|Regular attendance
+2026-10-13|CS205|Present|Regular attendance
+2026-10-13|IT301|Present|Regular attendance
+2026-10-13|IT302|Present|Regular attendance
+2026-10-13|IT303|Present|Regular attendance
+2026-10-13|IT304|Absent|Personal reasons
+2026-10-13|IT305|Present|Regular attendance
+2026-10-14|CS101|Present|Regular attendance
+2026-10-14|CS102|Present|Regular attendance
+2026-10-14|CS103|Present|Regular attendance
+2026-10-14|CS104|Present|Regular attendance
+2026-10-14|CS105|Present|Regular attendance
+2026-10-14|CS201|Absent|Family function / sick
+2026-10-14|CS202|Present|Regular attendance
+2026-10-14|CS203|Present|Regular attendance
+2026-10-14|CS204|Present|Regular attendance
+2026-10-14|CS205|Present|Regular attendance
+2026-10-14|IT301|Present|Regular attendance
+2026-10-14|IT302|Present|Regular attendance
+2026-10-14|IT303|Present|Regular attendance
+2026-10-14|IT304|Late|Traffic delay
+2026-10-14|IT305|Late|Delayed arrival
+2026-10-15|CS101|Present|Regular attendance
+2026-10-15|CS102|Late|Delayed arrival
+2026-10-15|CS103|Present|Regular attendance
+2026-10-15|CS104|Late|Delayed arrival
+2026-10-15|CS105|Late|Bus delay 15m
+2026-10-15|CS201|Present|Regular attendance
+2026-10-15|CS202|Late|Delayed arrival
+2026-10-15|CS203|Present|Regular attendance
+2026-10-15|CS204|Present|Regular attendance
+2026-10-15|CS205|Present|Regular attendance
+2026-10-15|IT301|Absent|Family function / sick
+2026-10-15|IT302|Present|Regular attendance
+2026-10-15|IT303|Present|Regular attendance
+2026-10-15|IT304|Present|Regular attendance
+2026-10-15|IT305|Present|Regular attendance
+2026-10-16|CS101|Present|Regular attendance
+2026-10-16|CS102|Absent|Family function / sick
+2026-10-16|CS103|Present|Regular attendance
+2026-10-16|CS104|Late|Delayed arrival
+2026-10-16|CS105|Absent|Medical leave / Unexcused
+2026-10-16|CS201|Present|Regular attendance
+2026-10-16|CS202|Late|Delayed arrival
+2026-10-16|CS203|Present|Regular attendance
+2026-10-16|CS204|Absent|Family function / sick
+2026-10-16|CS205|Present|Regular attendance
+2026-10-16|IT301|Present|Regular attendance
+2026-10-16|IT302|Present|Regular attendance
+2026-10-16|IT303|Present|Regular attendance
+2026-10-16|IT304|Present|Regular attendance
+2026-10-16|IT305|Present|Regular attendance
+2026-10-17|CS101|Present|Regular attendance
+2026-10-17|CS102|Present|Regular attendance
+2026-10-17|CS103|Absent|Family function / sick
+2026-10-17|CS104|Present|Regular attendance
+2026-10-17|CS105|Present|Regular attendance
+2026-10-17|CS201|Absent|Family function / sick
+2026-10-17|CS202|Present|Regular attendance
+2026-10-17|CS203|Present|Regular attendance
+2026-10-17|CS204|Present|Regular attendance
+2026-10-17|CS205|Present|Regular attendance
+2026-10-17|IT301|Present|Regular attendance
+2026-10-17|IT302|Present|Regular attendance
+2026-10-17|IT303|Present|Regular attendance
+2026-10-17|IT304|Absent|Personal reasons
+2026-10-17|IT305|Present|Regular attendance
+2026-10-19|CS101|Late|Delayed arrival
+2026-10-19|CS102|Present|Regular attendance
+2026-10-19|CS103|Present|Regular attendance
+2026-10-19|CS104|Present|Regular attendance
+2026-10-19|CS105|Absent|Medical leave / Unexcused
+2026-10-19|CS201|Present|Regular attendance
+2026-10-19|CS202|Present|Regular attendance
+2026-10-19|CS203|Present|Regular attendance
+2026-10-19|CS204|Present|Regular attendance
+2026-10-19|CS205|Present|Regular attendance
+2026-10-19|IT301|Present|Regular attendance
+2026-10-19|IT302|Present|Regular attendance
+2026-10-19|IT303|Present|Regular attendance
+2026-10-19|IT304|Late|Traffic delay
+2026-10-19|IT305|Present|Regular attendance
+2026-10-20|CS101|Present|Regular attendance
+2026-10-20|CS102|Present|Regular attendance
+2026-10-20|CS103|Late|Delayed arrival
+2026-10-20|CS104|Absent|Family function / sick
+2026-10-20|CS105|Present|Regular attendance
+2026-10-20|CS201|Present|Regular attendance
+2026-10-20|CS202|Present|Regular attendance
+2026-10-20|CS203|Present|Regular attendance
+2026-10-20|CS204|Present|Regular attendance
+2026-10-20|CS205|Present|Regular attendance
+2026-10-20|IT301|Present|Regular attendance
+2026-10-20|IT302|Present|Regular attendance
+2026-10-20|IT303|Present|Regular attendance
+2026-10-20|IT304|Present|Regular attendance
+2026-10-20|IT305|Present|Regular attendance
+2026-10-21|CS101|Present|Regular attendance
+2026-10-21|CS102|Present|Regular attendance
+2026-10-21|CS103|Present|Regular attendance
+2026-10-21|CS104|Present|Regular attendance
+2026-10-21|CS105|Late|Bus delay 15m
+2026-10-21|CS201|Present|Regular attendance
+2026-10-21|CS202|Present|Regular attendance
+2026-10-21|CS203|Present|Regular attendance
+2026-10-21|CS204|Present|Regular attendance
+2026-10-21|CS205|Present|Regular attendance
+2026-10-21|IT301|Present|Regular attendance
+2026-10-21|IT302|Present|Regular attendance
+2026-10-21|IT303|Present|Regular attendance
+2026-10-21|IT304|Present|Regular attendance
+2026-10-21|IT305|Present|Regular attendance
+2026-10-22|CS101|Present|Regular attendance
+2026-10-22|CS102|Present|Regular attendance
+2026-10-22|CS103|Late|Delayed arrival
+2026-10-22|CS104|Absent|Family function / sick
+2026-10-22|CS105|Absent|Medical leave / Unexcused
+2026-10-22|CS201|Late|Delayed arrival
+2026-10-22|CS202|Absent|Family function / sick
+2026-10-22|CS203|Present|Regular attendance
+2026-10-22|CS204|Present|Regular attendance
+2026-10-22|CS205|Present|Regular attendance
+2026-10-22|IT301|Absent|Family function / sick
+2026-10-22|IT302|Present|Regular attendance
+2026-10-22|IT303|Present|Regular attendance
+2026-10-22|IT304|Absent|Personal reasons
+2026-10-22|IT305|Present|Regular attendance
+2026-10-23|CS101|Absent|Family function / sick
+2026-10-23|CS102|Present|Regular attendance
+2026-10-23|CS103|Present|Regular attendance
+2026-10-23|CS104|Present|Regular attendance
+2026-10-23|CS105|Present|Regular attendance
+2026-10-23|CS201|Present|Regular attendance
+2026-10-23|CS202|Present|Regular attendance
+2026-10-23|CS203|Present|Regular attendance
+2026-10-23|CS204|Present|Regular attendance
+2026-10-23|CS205|Present|Regular attendance
+2026-10-23|IT301|Present|Regular attendance
+2026-10-23|IT302|Present|Regular attendance
+2026-10-23|IT303|Present|Regular attendance
+2026-10-23|IT304|Late|Traffic delay
+2026-10-23|IT305|Present|Regular attendance
+2026-10-24|CS101|Present|Regular attendance
+2026-10-24|CS102|Present|Regular attendance
+2026-10-24|CS103|Present|Regular attendance
+2026-10-24|CS104|Present|Regular attendance
+2026-10-24|CS105|Absent|Medical leave / Unexcused
+2026-10-24|CS201|Present|Regular attendance
+2026-10-24|CS202|Present|Regular attendance
+2026-10-24|CS203|Present|Regular attendance
+2026-10-24|CS204|Present|Regular attendance
+2026-10-24|CS205|Present|Regular attendance
+2026-10-24|IT301|Present|Regular attendance
+2026-10-24|IT302|Late|Delayed arrival
+2026-10-24|IT303|Present|Regular attendance
+2026-10-24|IT304|Present|Regular attendance
+2026-10-24|IT305|Present|Regular attendance
+2026-10-26|CS101|Present|Regular attendance
+2026-10-26|CS102|Present|Regular attendance
+2026-10-26|CS103|Present|Regular attendance
+2026-10-26|CS104|Present|Regular attendance
+2026-10-26|CS105|Present|Regular attendance
+2026-10-26|CS201|Present|Regular attendance
+2026-10-26|CS202|Present|Regular attendance
+2026-10-26|CS203|Present|Regular attendance
+2026-10-26|CS204|Present|Regular attendance
+2026-10-26|CS205|Present|Regular attendance
+2026-10-26|IT301|Present|Regular attendance
+2026-10-26|IT302|Present|Regular attendance
+2026-10-26|IT303|Present|Regular attendance
+2026-10-26|IT304|Present|Regular attendance
+2026-10-26|IT305|Present|Regular attendance
+2026-10-27|CS101|Present|Regular attendance
+2026-10-27|CS102|Present|Regular attendance
+2026-10-27|CS103|Present|Regular attendance
+2026-10-27|CS104|Present|Regular attendance
+2026-10-27|CS105|Late|Bus delay 15m
+2026-10-27|CS201|Absent|Family function / sick
+2026-10-27|CS202|Present|Regular attendance
+2026-10-27|CS203|Present|Regular attendance
+2026-10-27|CS204|Present|Regular attendance
+2026-10-27|CS205|Present|Regular attendance
+2026-10-27|IT301|Present|Regular attendance
+2026-10-27|IT302|Absent|Family function / sick
+2026-10-27|IT303|Present|Regular attendance
+2026-10-27|IT304|Absent|Personal reasons
+2026-10-27|IT305|Present|Regular attendance
+2026-10-28|CS101|Present|Regular attendance
+2026-10-28|CS102|Present|Regular attendance
+2026-10-28|CS103|Late|Delayed arrival
+2026-10-28|CS104|Present|Regular attendance
+2026-10-28|CS105|Absent|Medical leave / Unexcused
+2026-10-28|CS201|Present|Regular attendance
+2026-10-28|CS202|Present|Regular attendance
+2026-10-28|CS203|Late|Delayed arrival
+2026-10-28|CS204|Late|Delayed arrival
+2026-10-28|CS205|Present|Regular attendance
+2026-10-28|IT301|Present|Regular attendance
+2026-10-28|IT302|Late|Delayed arrival
+2026-10-28|IT303|Present|Regular attendance
+2026-10-28|IT304|Late|Traffic delay
+2026-10-28|IT305|Present|Regular attendance
+2026-10-29|CS101|Present|Regular attendance
+2026-10-29|CS102|Present|Regular attendance
+2026-10-29|CS103|Present|Regular attendance
+2026-10-29|CS104|Present|Regular attendance
+2026-10-29|CS105|Present|Regular attendance
+2026-10-29|CS201|Present|Regular attendance
+2026-10-29|CS202|Present|Regular attendance
+2026-10-29|CS203|Present|Regular attendance
+2026-10-29|CS204|Present|Regular attendance
+2026-10-29|CS205|Present|Regular attendance
+2026-10-29|IT301|Present|Regular attendance
+2026-10-29|IT302|Present|Regular attendance
+2026-10-29|IT303|Present|Regular attendance
+2026-10-29|IT304|Present|Regular attendance
+2026-10-29|IT305|Present|Regular attendance
+2026-10-30|CS101|Present|Regular attendance
+2026-10-30|CS102|Present|Regular attendance
+2026-10-30|CS103|Present|Regular attendance
+2026-10-30|CS104|Present|Regular attendance
+2026-10-30|CS105|Absent|Medical leave / Unexcused
+2026-10-30|CS201|Present|Regular attendance
+2026-10-30|CS202|Present|Regular attendance
+2026-10-30|CS203|Present|Regular attendance
+2026-10-30|CS204|Late|Delayed arrival
+2026-10-30|CS205|Present|Regular attendance
+2026-10-30|IT301|Present|Regular attendance
+2026-10-30|IT302|Present|Regular attendance
+2026-10-30|IT303|Late|Delayed arrival
+2026-10-30|IT304|Present|Regular attendance
+2026-10-30|IT305|Present|Regular attendance
+2026-10-31|CS101|Present|Regular attendance
+2026-10-31|CS102|Present|Regular attendance
+2026-10-31|CS103|Present|Regular attendance
+2026-10-31|CS104|Present|Regular attendance
+2026-10-31|CS105|Present|Regular attendance
+2026-10-31|CS201|Absent|Family function / sick
+2026-10-31|CS202|Present|Regular attendance
+2026-10-31|CS203|Present|Regular attendance
+2026-10-31|CS204|Absent|Family function / sick
+2026-10-31|CS205|Present|Regular attendance
+2026-10-31|IT301|Present|Regular attendance
+2026-10-31|IT302|Present|Regular attendance
+2026-10-31|IT303|Present|Regular attendance
+2026-10-31|IT304|Absent|Personal reasons
+2026-10-31|IT305|Present|Regular attendance
+2026-11-02|CS101|Present|Regular attendance
+2026-11-02|CS102|Present|Regular attendance
+2026-11-02|CS103|Present|Regular attendance
+2026-11-02|CS104|Present|Regular attendance
+2026-11-02|CS105|Absent|Unexcused / medical leave
+2026-11-02|CS201|Present|Regular attendance
+2026-11-02|CS202|Present|Regular attendance
+2026-11-02|CS203|Present|Regular attendance
+2026-11-02|CS204|Late|Delayed by transit
+2026-11-02|CS205|Present|Regular attendance
+2026-11-02|IT301|Present|Regular attendance
+2026-11-02|IT302|Present|Regular attendance
+2026-11-02|IT303|Absent|Sick leave
+2026-11-02|IT304|Present|Regular attendance
+2026-11-02|IT305|Present|Regular attendance

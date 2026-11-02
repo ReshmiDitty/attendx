@@ -1,0 +1,17 @@
+# AttendX Git Ignore
+
+# Binary Executables
+*.exe
+*.o
+*.obj
+
+# Runtime Backup Files
+backups/*.bak
+data/*_tmp.txt
+
+# Local IDE configuration
+.vscode/
+
+# OS Artifacts
+.DS_Store
+Thumbs.db
