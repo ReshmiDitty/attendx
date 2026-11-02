@@ -1,522 +1,391 @@
-"""
-AttendX – Student Attendance Management System (Streamlit Edition)
-Palette:
-- AQUAMARINE (#0F3F49) - Primary & Present Attendance
-- CONCRETE   (#ECE6DF) - Canvas Background
-- BURGUNDY   (#7F0508) - Absent Attendance & Critical Alerts
-- WARM AMBER (#D97706) - Late Attendance
-"""
-
 import os
-from datetime import datetime
-import pandas as pd
+import json
 import streamlit as st
-import altair as alt
+import streamlit.components.v1 as components
 
-# 1. Page Configuration
+# Configure Streamlit page for full-bleed dashboard presentation
 st.set_page_config(
     page_title="AttendX – Student Attendance Management System",
     page_icon="🎓",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
-# 2. Inject Concrete (#ECE6DF) & Aquamarine (#0F3F49) Design System
+# Hide Streamlit's native chrome to let AttendX's custom UI take over the entire screen
 st.markdown("""
 <style>
-  /* App Background: CONCRETE (#ECE6DF) */
+  /* Hide Streamlit default navigation, header, footer, and borders */
+  #MainMenu, header, footer, [data-testid="stToolbar"], [data-testid="stDecoration"], [data-testid="stSidebarNav"] {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+  }
   .stApp {
     background-color: #ECE6DF !important;
-    color: #0F3F49 !important;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    padding: 0 !important;
+    margin: 0 !important;
   }
-  
-  /* Sidebar Styling */
-  [data-testid="stSidebar"] {
-    background-color: #F5EFEB !important;
-    border-right: 1px solid #D6CCC0;
+  .block-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100vw !important;
+    height: 100vh !important;
   }
-  
-  /* Headers & Accent Text */
-  h1, h2, h3, h4, h5, h6 {
-    color: #0F3F49 !important;
-    font-weight: 700 !important;
-  }
-  
-  /* Metric Card Styling */
-  [data-testid="stMetric"] {
-    background: #FFFFFF !important;
-    border: 1px solid #D6CCC0 !important;
-    border-radius: 12px !important;
-    padding: 16px 20px !important;
-    box-shadow: 0 2px 6px rgba(15, 63, 73, 0.05) !important;
-  }
-  [data-testid="stMetricValue"] {
-    color: #0F3F49 !important;
-    font-weight: 800 !important;
-    font-size: 2.1rem !important;
-  }
-  [data-testid="stMetricLabel"] {
-    color: #5F7A80 !important;
-    font-size: 0.825rem !important;
-    font-weight: 700 !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.05em !important;
-  }
-  
-  /* Card Container */
-  .attendx-card {
-    background: #FFFFFF;
-    border: 1px solid #D6CCC0;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 2px 8px rgba(15, 63, 73, 0.04);
-    margin-bottom: 20px;
-  }
-  
-  /* Badges */
-  .badge-present {
-    background: rgba(15, 63, 73, 0.12);
-    color: #0F3F49;
-    padding: 4px 10px;
-    border-radius: 9999px;
-    font-weight: 700;
-    font-size: 0.8rem;
-    border: 1px solid rgba(15, 63, 73, 0.3);
-  }
-  .badge-absent {
-    background: rgba(127, 5, 8, 0.12);
-    color: #7F0508;
-    padding: 4px 10px;
-    border-radius: 9999px;
-    font-weight: 700;
-    font-size: 0.8rem;
-    border: 1px solid rgba(127, 5, 8, 0.3);
-  }
-  .badge-late {
-    background: rgba(217, 119, 6, 0.12);
-    color: #B45309;
-    padding: 4px 10px;
-    border-radius: 9999px;
-    font-weight: 700;
-    font-size: 0.8rem;
-    border: 1px solid rgba(217, 119, 6, 0.3);
-  }
-  
-  /* Buttons */
-  .stButton > button {
-    background-color: #0F3F49 !important;
-    color: #ECE6DF !important;
+  iframe {
+    width: 100vw !important;
+    height: 100vh !important;
+    min-height: 1020px !important;
     border: none !important;
-    border-radius: 8px !important;
-    font-weight: 600 !important;
-    padding: 8px 18px !important;
-    transition: all 0.2s ease !important;
-  }
-  .stButton > button:hover {
-    background-color: #165664 !important;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(15, 63, 73, 0.25) !important;
-  }
-  
-  /* Tabs */
-  .stTabs [data-baseweb="tab-list"] {
-    gap: 8px;
-    background-color: #E7DFD5;
-    padding: 6px;
-    border-radius: 10px;
-  }
-  .stTabs [data-baseweb="tab"] {
-    border-radius: 8px;
-    color: #0F3F49;
-    font-weight: 600;
-  }
-  .stTabs [aria-selected="true"] {
-    background-color: #FFFFFF !important;
-    color: #0F3F49 !important;
-    box-shadow: 0 2px 4px rgba(15, 63, 73, 0.08);
+    display: block !important;
   }
 </style>
 """, unsafe_allow_html=True)
 
-# 3. File Paths for Standard C Persistence
-STUDENTS_FILE = os.path.join("data", "students.txt")
-ATTENDANCE_FILE = os.path.join("data", "attendance.txt")
-AUDIT_FILE = os.path.join("data", "audit_log.txt")
-
-# Helper: Load Students from C flatfile
-@st.cache_data(ttl=5)
-def load_students():
-    if not os.path.exists(STUDENTS_FILE):
-        return pd.DataFrame(columns=["roll_no", "name", "section", "email", "phone", "joined_on"])
-    records = []
-    with open(STUDENTS_FILE, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            parts = line.split("|")
-            if len(parts) >= 6:
-                records.append({
-                    "roll_no": parts[0],
-                    "name": parts[1],
-                    "section": parts[2],
-                    "email": parts[3],
-                    "phone": parts[4],
-                    "joined_on": parts[5]
-                })
-    return pd.DataFrame(records)
-
-# Helper: Load Attendance from C flatfile
-@st.cache_data(ttl=5)
-def load_attendance():
-    if not os.path.exists(ATTENDANCE_FILE):
-        return pd.DataFrame(columns=["date", "roll_no", "status", "remarks"])
-    records = []
-    with open(ATTENDANCE_FILE, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            parts = line.split("|")
-            if len(parts) >= 4:
-                records.append({
-                    "date": parts[0],
-                    "roll_no": parts[1],
-                    "status": parts[2],
-                    "remarks": parts[3]
-                })
-    return pd.DataFrame(records)
-
-# Helper: Save Batch Attendance
-def save_attendance_batch(records_to_save, target_date):
-    existing = []
-    if os.path.exists(ATTENDANCE_FILE):
-        with open(ATTENDANCE_FILE, "r", encoding="utf-8") as f:
+# Helper: Load flatfile data from data/*.txt with hardcoded fallbacks
+def load_project_data():
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # 1. Students
+    students = []
+    s_path = os.path.join(base_dir, "data", "students.txt")
+    if os.path.exists(s_path):
+        with open(s_path, "r", encoding="utf-8") as f:
             for line in f:
-                l = line.strip()
-                if not l:
-                    continue
-                parts = l.split("|")
-                # Exclude records for target date being updated
-                if len(parts) >= 4 and parts[0] != target_date:
-                    existing.append(l)
-    
-    # Append new records
-    for r in records_to_save:
-        existing.append(f"{r['date']}|{r['roll_no']}|{r['status']}|{r['remarks']}")
-    
-    with open(ATTENDANCE_FILE, "w", encoding="utf-8") as f:
-        for item in existing:
-            f.write(item + "\n")
-            
-    # Audit log
-    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    with open(AUDIT_FILE, "a", encoding="utf-8") as f:
-        f.write(f"{now_str}|streamlit_user|Recorded attendance batch for date {target_date} ({len(records_to_save)} records)\n")
+                line = line.strip()
+                if not line: continue
+                p = line.split("|")
+                if len(p) >= 6:
+                    students.append({
+                        "roll_no": p[0], "name": p[1], "section": p[2],
+                        "email": p[3], "phone": p[4], "joined_on": p[5]
+                    })
+    if not students:
+        students = [
+            {"roll_no": "CS101", "name": "Aarav Sharma", "section": "CS-A", "email": "aarav.sharma@attendx.edu", "phone": "+91 98765 43210", "joined_on": "2026-08-01"},
+            {"roll_no": "CS102", "name": "Ananya Iyer", "section": "CS-A", "email": "ananya.iyer@attendx.edu", "phone": "+91 98765 43211", "joined_on": "2026-08-01"},
+            {"roll_no": "CS103", "name": "Rohan Verma", "section": "CS-A", "email": "rohan.verma@attendx.edu", "phone": "+91 98765 43212", "joined_on": "2026-08-01"},
+            {"roll_no": "CS104", "name": "Diya Patel", "section": "CS-A", "email": "diya.patel@attendx.edu", "phone": "+91 98765 43213", "joined_on": "2026-08-01"},
+            {"roll_no": "CS105", "name": "Kabir Khan", "section": "CS-A", "email": "kabir.khan@attendx.edu", "phone": "+91 98765 43214", "joined_on": "2026-08-01"},
+            {"roll_no": "CS201", "name": "Ishaan Roy", "section": "CS-B", "email": "ishaan.roy@attendx.edu", "phone": "+91 98765 43220", "joined_on": "2026-08-01"},
+            {"roll_no": "CS202", "name": "Sneha Nair", "section": "CS-B", "email": "sneha.nair@attendx.edu", "phone": "+91 98765 43221", "joined_on": "2026-08-01"},
+            {"roll_no": "CS203", "name": "Vikram Malhotra", "section": "CS-B", "email": "vikram.m@attendx.edu", "phone": "+91 98765 43222", "joined_on": "2026-08-01"},
+            {"roll_no": "CS204", "name": "Pooja Reddy", "section": "CS-B", "email": "pooja.reddy@attendx.edu", "phone": "+91 98765 43223", "joined_on": "2026-08-01"},
+            {"roll_no": "CS205", "name": "Aditya Joshi", "section": "CS-B", "email": "aditya.j@attendx.edu", "phone": "+91 98765 43224", "joined_on": "2026-08-01"},
+            {"roll_no": "IT301", "name": "Meera Kulkarni", "section": "IT-A", "email": "meera.k@attendx.edu", "phone": "+91 98765 43230", "joined_on": "2026-08-01"},
+            {"roll_no": "IT302", "name": "Devendra Sen", "section": "IT-A", "email": "dev.sen@attendx.edu", "phone": "+91 98765 43231", "joined_on": "2026-08-01"},
+            {"roll_no": "IT303", "name": "Tanya Gupta", "section": "IT-A", "email": "tanya.gupta@attendx.edu", "phone": "+91 98765 43232", "joined_on": "2026-08-01"},
+            {"roll_no": "IT304", "name": "Farhan Sheikh", "section": "IT-A", "email": "farhan.s@attendx.edu", "phone": "+91 98765 43233", "joined_on": "2026-08-01"},
+            {"roll_no": "IT305", "name": "Rhea D'Souza", "section": "IT-A", "email": "rhea.dsouza@attendx.edu", "phone": "+91 98765 43234", "joined_on": "2026-08-01"}
+        ]
 
-# Load Data
-df_students = load_students()
-df_attendance = load_attendance()
+    # 2. Attendance
+    attendance = []
+    a_path = os.path.join(base_dir, "data", "attendance.txt")
+    if os.path.exists(a_path):
+        with open(a_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line: continue
+                p = line.split("|")
+                if len(p) >= 4:
+                    attendance.append({
+                        "date": p[0], "roll_no": p[1], "status": p[2], "remarks": p[3]
+                    })
+                    
+    # 3. Calculate summary metrics identical to backend
+    today = "2026-11-02"
+    today_records = [r for r in attendance if r["date"] == today]
+    pres_today = sum(1 for r in today_records if r["status"] == "Present")
+    abs_today = sum(1 for r in today_records if r["status"] == "Absent")
+    late_today = sum(1 for r in today_records if r["status"] == "Late")
+    total_today = pres_today + abs_today + late_today
+    
+    tot_pres_all = sum(1 for r in attendance if r["status"] == "Present")
+    tot_late_all = sum(1 for r in attendance if r["status"] == "Late")
+    total_recs = len(attendance)
+    overall_pct = ((tot_pres_all + tot_late_all) / total_recs * 100.0) if total_recs > 0 else 0.0
+    
+    kpi = {
+        "total_students": len(students),
+        "present_today": pres_today,
+        "absent_today": abs_today,
+        "late_today": late_today,
+        "total_today": total_today,
+        "present_today_pct": (pres_today / total_today * 100.0) if total_today > 0 else 0.0,
+        "absent_today_pct": (abs_today / total_today * 100.0) if total_today > 0 else 0.0,
+        "late_today_pct": (late_today / total_today * 100.0) if total_today > 0 else 0.0,
+        "overall_percentage": round(overall_pct, 1)
+    }
 
-# Compute Key Statistics with 1-decimal precision
-total_students = len(df_students)
-dates = sorted(df_attendance["date"].unique()) if not df_attendance.empty else []
-today_date = "2026-11-02" if "2026-11-02" in dates else (dates[-1] if dates else datetime.now().strftime("%Y-%m-%d"))
-
-df_today = df_attendance[df_attendance["date"] == today_date] if not df_attendance.empty else pd.DataFrame()
-present_today = len(df_today[df_today["status"] == "Present"])
-absent_today = len(df_today[df_today["status"] == "Absent"])
-late_today = len(df_today[df_today["status"] == "Late"])
-total_marked_today = present_today + absent_today + late_today
-
-# Accurate Overall percentage
-total_records = len(df_attendance)
-total_present_all = len(df_attendance[df_attendance["status"] == "Present"])
-total_late_all = len(df_attendance[df_attendance["status"] == "Late"])
-overall_rate = ((total_present_all + total_late_all) / total_records * 100.0) if total_records > 0 else 0.0
-
-# Sidebar Brand
-with st.sidebar:
-    st.markdown("""
-    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
-      <div style="width: 40px; height: 40px; background: #0F3F49; color: #ECE6DF; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.3rem;">A</div>
-      <div>
-        <div style="font-size: 1.25rem; font-weight: 800; color: #0F3F49;">AttendX</div>
-        <div style="font-size: 0.72rem; color: #5F7A80; font-weight: 600;">PURE C FLATFILE BACKEND</div>
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown("---")
-    nav = st.radio("Navigation", ["📊 Dashboard", "👥 Students Directory", "📝 Mark Attendance", "📈 Analytics & Reports", "⚙️ C Engine Viva Notes"], label_visibility="collapsed")
-    
-    st.markdown("---")
-    st.markdown(f"""
-    **Session Information**  
-    - **Active Date**: `{today_date}`  
-    - **Total Enrolled**: `{total_students}`  
-    - **C Flatfile Storage**: `data/*.txt`  
-    """)
-
-# =========================================================================
-# TAB 1: DASHBOARD
-# =========================================================================
-if nav == "📊 Dashboard":
-    st.title("Dashboard Overview")
-    st.caption("Live monitoring of cohort attendance trajectory powered by C standard file I/O.")
-    
-    # KPI Grid
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("Total Enrolled", f"{total_students}", "Active flatfile records")
-    with col2:
-        pres_pct = (present_today / total_students * 100.0) if total_students > 0 else 0.0
-        st.metric("Present Today", f"{present_today}", f"{pres_pct:.1f}% of cohort")
-    with col3:
-        abs_pct = (absent_today / total_students * 100.0) if total_students > 0 else 0.0
-        st.metric("Absent Today", f"{absent_today}", f"-{abs_pct:.1f}% cohort loss", delta_color="inverse")
-    with col4:
-        st.metric("Overall Rate", f"{overall_rate:.1f}%", "30-day aggregate")
-        
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # Charts Row
-    chart_col1, chart_col2 = st.columns([2, 1])
-    
-    with chart_col1:
-        st.markdown("### 📈 Attendance Trend (Dual Trajectory)")
-        if not df_attendance.empty:
-            # Aggregate per date
-            trend_data = []
-            for d in dates[-14:]:
-                sub = df_attendance[df_attendance["date"] == d]
-                tot = len(sub)
-                p = len(sub[sub["status"] == "Present"])
-                a = len(sub[sub["status"] == "Absent"])
-                trend_data.append({
-                    "Date": d[5:],
-                    "Present Rate (%)": round((p / tot * 100.0), 1) if tot > 0 else 0.0,
-                    "Absent Rate (%)": round((a / tot * 100.0), 1) if tot > 0 else 0.0
-                })
-            df_trend = pd.DataFrame(trend_data)
-            
-            # Altair chart with reference colors: Aquamarine (#0F3F49) & Burgundy (#7F0508)
-            df_melted = df_trend.melt("Date", var_name="Metric", value_name="Percentage")
-            color_scale = alt.Scale(domain=["Present Rate (%)", "Absent Rate (%)"], range=["#0F3F49", "#7F0508"])
-            
-            line_chart = alt.Chart(df_melted).mark_line(point=True, strokeWidth=2.5).encode(
-                x=alt.X("Date:N", title="Calendar Date"),
-                y=alt.Y("Percentage:Q", title="Rate (%)", scale=alt.Scale(domain=[0, 100])),
-                color=alt.Color("Metric:N", scale=color_scale),
-                tooltip=["Date", "Metric", "Percentage"]
-            ).properties(height=320)
-            
-            st.altair_chart(line_chart, use_container_width=True)
-        else:
-            st.info("No attendance records found.")
-            
-    with chart_col2:
-        st.markdown(f"### 🎯 Today's Breakdown ({today_date})")
-        if total_marked_today > 0:
-            donut_data = pd.DataFrame([
-                {"Status": "Present", "Count": present_today},
-                {"Status": "Absent", "Count": absent_today},
-                {"Status": "Late", "Count": late_today}
-            ])
-            donut_scale = alt.Scale(domain=["Present", "Absent", "Late"], range=["#0F3F49", "#7F0508", "#D97706"])
-            donut = alt.Chart(donut_data).mark_arc(innerRadius=65).encode(
-                theta=alt.Theta("Count:Q"),
-                color=alt.Color("Status:N", scale=donut_scale),
-                tooltip=["Status", "Count"]
-            ).properties(height=320)
-            st.altair_chart(donut, use_container_width=True)
-        else:
-            st.info("No sessions recorded for today.")
-
-    # Section-Wise Performance Row
-    st.markdown("### 🏛️ Section-Wise Performance (Present vs Absent)")
-    if not df_students.empty and not df_attendance.empty:
-        df_merged = df_attendance.merge(df_students, on="roll_no")
-        sec_summary = []
-        for sec in sorted(df_students["section"].unique()):
-            sec_recs = df_merged[df_merged["section"] == sec]
-            s_tot = len(sec_recs)
-            s_p = len(sec_recs[sec_recs["status"] == "Present"])
-            s_a = len(sec_recs[sec_recs["status"] == "Absent"])
-            sec_summary.append({"Section": sec, "Status": "Present (%)", "Percentage": round((s_p / s_tot * 100.0), 1) if s_tot > 0 else 0})
-            sec_summary.append({"Section": sec, "Status": "Absent (%)", "Percentage": round((s_a / s_tot * 100.0), 1) if s_tot > 0 else 0})
-            
-        df_sec = pd.DataFrame(sec_summary)
-        sec_scale = alt.Scale(domain=["Present (%)", "Absent (%)"], range=["#0F3F49", "#7F0508"])
-        sec_bar = alt.Chart(df_sec).mark_bar(cornerRadius=4).encode(
-            x=alt.X("Section:N", title="Academic Section"),
-            y=alt.Y("Percentage:Q", title="Percentage (%)", scale=alt.Scale(domain=[0, 100])),
-            color=alt.Color("Status:N", scale=sec_scale),
-            xOffset="Status:N",
-            tooltip=["Section", "Status", "Percentage"]
-        ).properties(height=260)
-        st.altair_chart(sec_bar, use_container_width=True)
-
-# =========================================================================
-# TAB 2: STUDENTS DIRECTORY
-# =========================================================================
-elif nav == "👥 Students Directory":
-    st.title("Student Directory")
-    st.caption("Active students stored in pipe-delimited C flatfile (`data/students.txt`).")
-    
-    col_s1, col_s2 = st.columns([3, 1])
-    with col_s1:
-        search = st.text_input("🔍 Search by Name or Roll No", "")
-    with col_s2:
-        sec_filter = st.selectbox("Filter Section", ["All Sections"] + sorted(df_students["section"].unique().tolist()))
-        
-    filtered_df = df_students.copy()
-    if search:
-        filtered_df = filtered_df[filtered_df["name"].str.contains(search, case=False) | filtered_df["roll_no"].str.contains(search, case=False)]
-    if sec_filter != "All Sections":
-        filtered_df = filtered_df[filtered_df["section"] == sec_filter]
-        
-    st.dataframe(
-        filtered_df,
-        column_config={
-            "roll_no": "Roll No",
-            "name": "Full Name",
-            "section": "Section",
-            "email": "Email Address",
-            "phone": "Contact Phone",
-            "joined_on": "Enrollment Date"
-        },
-        use_container_width=True,
-        hide_index=True
-    )
-    
-    st.markdown("### 📋 Student Profile Inspector")
-    selected_roll = st.selectbox("Select Student to Inspect Profile & Heatmap:", df_students["roll_no"].tolist())
-    if selected_roll:
-        s_info = df_students[df_students["roll_no"] == selected_roll].iloc[0]
-        s_att = df_attendance[df_attendance["roll_no"] == selected_roll]
-        s_tot = len(s_att)
-        s_pres = len(s_att[s_att["status"] == "Present"])
-        s_abs = len(s_att[s_att["status"] == "Absent"])
-        s_late = len(s_att[s_att["status"] == "Late"])
-        s_pct = ((s_pres + s_late) / s_tot * 100.0) if s_tot > 0 else 0.0
-        
-        pcol1, pcol2, pcol3, pcol4 = st.columns(4)
-        pcol1.metric("Student Name", s_info["name"], f"Roll: {selected_roll}")
-        pcol2.metric("Attendance Rate", f"{s_pct:.1f}%", "Eligible" if s_pct >= 75 else "At Risk (<75%)", delta_color="normal" if s_pct >= 75 else "inverse")
-        pcol3.metric("Present / Total", f"{s_pres} / {s_tot} days")
-        pcol4.metric("Absent / Late", f"{s_abs} Abs, {s_late} Late")
-        
-        st.markdown("**Recent Attendance History:**")
-        st.dataframe(s_att.tail(10)[["date", "status", "remarks"]], hide_index=True, use_container_width=True)
-
-# =========================================================================
-# TAB 3: MARK ATTENDANCE
-# =========================================================================
-elif nav == "📝 Mark Attendance":
-    st.title("Mark Daily Attendance")
-    st.caption("Writes atomic batches directly to `data/attendance.txt` preserving pipe delimiter format.")
-    
-    col_m1, col_m2 = st.columns([2, 2])
-    with col_m1:
-        selected_date = st.date_input("Attendance Date", datetime.now()).strftime("%Y-%m-%d")
-    with col_m2:
-        mark_sec = st.selectbox("Section", ["All Sections"] + sorted(df_students["section"].unique().tolist()))
-        
-    students_to_mark = df_students.copy()
-    if mark_sec != "All Sections":
-        students_to_mark = students_to_mark[students_to_mark["section"] == mark_sec]
-        
-    existing_att = df_attendance[df_attendance["date"] == selected_date].set_index("roll_no")["status"].to_dict()
-    
-    st.markdown(f"**Marking {len(students_to_mark)} students for {selected_date}:**")
-    
-    mark_form = st.form(key="mark_attendance_form")
-    records_to_commit = []
-    
-    with mark_form:
-        for idx, row in students_to_mark.iterrows():
-            rcol1, rcol2, rcol3 = st.columns([2, 2, 3])
-            rcol1.write(f"**{row['name']}** ({row['roll_no']})")
-            current_st = existing_att.get(row['roll_no'], "Present")
-            status_val = rcol2.selectbox(f"Status for {row['roll_no']}", ["Present", "Absent", "Late"], index=["Present", "Absent", "Late"].index(current_st), key=f"st_{row['roll_no']}", label_visibility="collapsed")
-            remark_val = rcol3.text_input(f"Remarks for {row['roll_no']}", "Regular attendance", key=f"rem_{row['roll_no']}", label_visibility="collapsed")
-            records_to_commit.append({
-                "date": selected_date,
-                "roll_no": row["roll_no"],
-                "status": status_val,
-                "remarks": remark_val
-            })
-            
-        submitted = st.form_submit_button("💾 Save Attendance to C Flatfile")
-        if submitted:
-            save_attendance_batch(records_to_commit, selected_date)
-            st.success(f"Attendance recorded for {len(records_to_commit)} students on {selected_date}!")
-            st.cache_data.clear()
-            st.rerun()
-
-# =========================================================================
-# TAB 4: ANALYTICS & REPORTS
-# =========================================================================
-elif nav == "📈 Analytics & Reports":
-    st.title("Attendance Analytics & Reports")
-    st.caption("Mathematical summary and cohort metrics with exact floating-point accuracy.")
-    
-    # Calculate student stats
-    report_rows = []
-    for _, s in df_students.iterrows():
-        s_att = df_attendance[df_attendance["roll_no"] == s["roll_no"]]
-        tot = len(s_att)
-        p = len(s_att[s_att["status"] == "Present"])
-        a = len(s_att[s_att["status"] == "Absent"])
-        l = len(s_att[s_att["status"] == "Late"])
-        pct = ((p + l) / tot * 100.0) if tot > 0 else 0.0
-        report_rows.append({
-            "Roll No": s["roll_no"],
-            "Name": s["name"],
-            "Section": s["section"],
-            "Total Sessions": tot,
-            "Present": p,
-            "Absent": a,
-            "Late": l,
-            "Attendance Rate (%)": round(pct, 1),
-            "Status": "Good Standing" if pct >= 75 else "Warning (<75%)"
+    # Sections
+    sections = []
+    distinct_secs = sorted(list(set(s["section"] for s in students)))
+    for sec in distinct_secs:
+        sec_rolls = set(s["roll_no"] for s in students if s["section"] == sec)
+        sec_recs = [r for r in attendance if r["roll_no"] in sec_rolls]
+        s_tot = len(sec_recs)
+        s_p = sum(1 for r in sec_recs if r["status"] == "Present")
+        s_a = sum(1 for r in sec_recs if r["status"] == "Absent")
+        s_l = sum(1 for r in sec_recs if r["status"] == "Late")
+        sections.append({
+            "section": sec,
+            "total_students": len(sec_rolls),
+            "percentage": round(((s_p + s_l) / s_tot * 100.0) if s_tot > 0 else 0.0, 1),
+            "present_percentage": round((s_p / s_tot * 100.0) if s_tot > 0 else 0.0, 1),
+            "absent_percentage": round((s_a / s_tot * 100.0) if s_tot > 0 else 0.0, 1),
+            "present_count": s_p,
+            "absent_count": s_a,
+            "late_count": s_l
         })
-    df_rep = pd.DataFrame(report_rows)
-    
-    st.dataframe(df_rep, use_container_width=True, hide_index=True)
-    
-    csv_bytes = df_rep.to_csv(index=False).encode('utf-8')
-    st.download_button(
-        label="📥 Export Report as CSV",
-        data=csv_bytes,
-        file_name=f"attendx_report_{today_date}.csv",
-        mime="text/csv"
-    )
 
-# =========================================================================
-# TAB 5: VIVA & ARCHITECTURE NOTES
-# =========================================================================
-elif nav == "⚙️ C Engine Viva Notes":
-    st.title("C Backend & Architecture Notes (Viva Ready)")
-    
-    st.markdown("""
-    ### 🏛️ System Architecture Overview
-    - **C HTTP Engine**: Mongoose embedded web server (`src/server.c`, `lib/mongoose.c`).
-    - **JSON Parsing**: Ultra-lightweight cJSON library (`lib/cJSON.c`).
-    - **Data Persistence**: Standard C file handling (`fopen`, `fclose`, `fgets`, `fprintf`, `fread`, `fwrite`).
-    - **Safe Atomic Operations**: Writes to temporary file (`data/*_tmp.txt`), takes a binary backup in `/backups`, and calls `rename()` to guarantee atomic state changes.
-    - **Password Security**: FIPS 180-2 SHA-256 with custom salt (`utils.c`).
-    
-    ```c
-    // Core file handling pattern in file_handler.c:
-    FILE *src = fopen("data/attendance.txt", "r");
-    FILE *dst = fopen("data/attendance_tmp.txt", "w");
-    // ... write modified records ...
-    fclose(src);
-    fclose(dst);
-    remove("data/attendance.txt");
-    rename("data/attendance_tmp.txt", "data/attendance.txt");
-    ```
-    """)
+    # Trend
+    dates = sorted(list(set(r["date"] for r in attendance)))
+    trend = []
+    for d in dates:
+        d_recs = [r for r in attendance if r["date"] == d]
+        d_tot = len(d_recs)
+        dp = sum(1 for r in d_recs if r["status"] == "Present")
+        da = sum(1 for r in d_recs if r["status"] == "Absent")
+        dl = sum(1 for r in d_recs if r["status"] == "Late")
+        trend.append({
+            "date": d,
+            "present": dp,
+            "absent": da,
+            "late": dl,
+            "percentage": round(((dp + dl) / d_tot * 100.0) if d_tot > 0 else 0.0, 1),
+            "present_percentage": round((dp / d_tot * 100.0) if d_tot > 0 else 0.0, 1),
+            "absent_percentage": round((da / d_tot * 100.0) if d_tot > 0 else 0.0, 1)
+        })
+
+    # Low attendance watchlist (< 75%)
+    low_alerts = []
+    for s in students:
+        s_recs = [r for r in attendance if r["roll_no"] == s["roll_no"]]
+        s_tot = len(s_recs)
+        sp = sum(1 for r in s_recs if r["status"] == "Present")
+        sl = sum(1 for r in s_recs if r["status"] == "Late")
+        pct = ((sp + sl) / s_tot * 100.0) if s_tot > 0 else 0.0
+        if s_tot > 0 and pct < 75.0:
+            low_alerts.append({
+                "roll_no": s["roll_no"],
+                "name": s["name"],
+                "section": s["section"],
+                "percentage": round(pct, 1),
+                "present_days": sp,
+                "total_days": s_tot
+            })
+
+    # Activity Feed
+    activity_feed = [
+        {"timestamp": "2026-11-02 22:30:00", "user": "admin", "action": "User admin active on AttendX production dashboard"},
+        {"timestamp": "2026-11-02 22:01:11", "user": "admin", "action": "User admin logged in successfully (admin)"},
+        {"timestamp": "2026-11-02 21:16:16", "user": "system", "action": "Attendance verified for 2026-11-02 session"}
+    ]
+
+    summary = {
+        "kpi": kpi,
+        "sections": sections,
+        "trend": trend,
+        "low_attendance_alerts": low_alerts,
+        "activity_feed": activity_feed
+    }
+
+    return {
+        "students": students,
+        "attendance": attendance,
+        "summary": summary
+    }
+
+# Read frontend assets
+base_dir = os.path.dirname(os.path.abspath(__file__))
+with open(os.path.join(base_dir, "public", "index.html"), "r", encoding="utf-8") as f:
+    html_template = f.read()
+
+with open(os.path.join(base_dir, "public", "css", "style.css"), "r", encoding="utf-8") as f:
+    css_content = f.read()
+
+with open(os.path.join(base_dir, "public", "js", "charts.js"), "r", encoding="utf-8") as f:
+    charts_js_content = f.read()
+
+with open(os.path.join(base_dir, "public", "js", "app.js"), "r", encoding="utf-8") as f:
+    app_js_content = f.read()
+
+project_data = load_project_data()
+data_json = json.dumps(project_data)
+
+# Inject CSS directly into the HTML head
+html_bundle = html_template.replace(
+    '<link rel="stylesheet" href="css/style.css">',
+    f'<style>\n{css_content}\n</style>'
+)
+
+# Inline client-side mock API that resolves from project_data
+mock_api_script = f"""
+<script>
+window.__ATTENDX_DATA__ = {data_json};
+
+// Pre-authenticate as admin so dashboard loads immediately
+if (!localStorage.getItem('attendx_auth_token')) {{
+  localStorage.setItem('attendx_auth_token', 'demo_admin_token_streamlit');
+  localStorage.setItem('attendx_user', JSON.stringify({{ username: 'admin', role: 'admin' }}));
+  localStorage.setItem('attendx_theme', 'light');
+}}
+
+// Standalone in-memory API for Streamlit Cloud
+window.API = {{
+  TOKEN_KEY: 'attendx_auth_token',
+  USER_KEY: 'attendx_user',
+  getToken() {{ return localStorage.getItem(this.TOKEN_KEY); }},
+  setToken(t) {{ if (t) localStorage.setItem(this.TOKEN_KEY, t); else localStorage.removeItem(this.TOKEN_KEY); }},
+  getUser() {{
+    try {{ const u = localStorage.getItem(this.USER_KEY); return u ? JSON.parse(u) : null; }}
+    catch {{ return null; }}
+  }},
+  setUser(u) {{ if (u) localStorage.setItem(this.USER_KEY, JSON.stringify(u)); else localStorage.removeItem(this.USER_KEY); }},
+  isAuthenticated() {{ return !!this.getToken(); }},
+
+  async login(username, password) {{
+    const user = {{ username: username || 'admin', role: (username === 'teacher') ? 'teacher' : 'admin' }};
+    this.setToken('session_' + Date.now());
+    this.setUser(user);
+    return {{ success: true, message: 'Logged in successfully', data: {{ token: this.getToken(), user }} }};
+  }},
+
+  async logout() {{
+    this.setToken(null);
+    this.setUser(null);
+    window.location.reload();
+  }},
+
+  async getSummary() {{
+    return {{ success: true, message: 'Summary loaded', data: window.__ATTENDX_DATA__.summary }};
+  }},
+
+  async getStudents() {{
+    return {{ success: true, message: 'Students retrieved', data: window.__ATTENDX_DATA__.students }};
+  }},
+
+  async addStudent(s) {{
+    window.__ATTENDX_DATA__.students.push(s);
+    return {{ success: true, message: 'Student added successfully', data: s }};
+  }},
+
+  async updateStudent(roll, s) {{
+    const idx = window.__ATTENDX_DATA__.students.findIndex(x => x.roll_no === roll);
+    if (idx !== -1) {{
+      window.__ATTENDX_DATA__.students[idx] = {{ ...window.__ATTENDX_DATA__.students[idx], ...s }};
+    }}
+    return {{ success: true, message: 'Student updated successfully' }};
+  }},
+
+  async deleteStudent(roll) {{
+    window.__ATTENDX_DATA__.students = window.__ATTENDX_DATA__.students.filter(x => x.roll_no !== roll);
+    return {{ success: true, message: 'Student deleted successfully' }};
+  }},
+
+  async getAttendance(params = {{}}) {{
+    let list = [...window.__ATTENDX_DATA__.attendance];
+    if (params.date) list = list.filter(r => r.date === params.date);
+    if (params.roll_no) list = list.filter(r => r.roll_no === params.roll_no);
+    return {{ success: true, data: list }};
+  }},
+
+  async saveAttendance(date, records) {{
+    const existing = window.__ATTENDX_DATA__.attendance.filter(r => r.date !== date);
+    records.forEach(r => existing.push({{ date, roll_no: r.roll_no, status: r.status, remarks: r.remarks || '' }}));
+    window.__ATTENDX_DATA__.attendance = existing;
+    return {{ success: true, message: 'Attendance recorded successfully' }};
+  }},
+
+  async getStudentReport(roll) {{
+    const student = window.__ATTENDX_DATA__.students.find(s => s.roll_no === roll) || {{ roll_no: roll, name: 'Student', section: 'CS-A' }};
+    const history = window.__ATTENDX_DATA__.attendance.filter(r => r.roll_no === roll);
+    const total_days = history.length;
+    const present_days = history.filter(r => r.status === 'Present').length;
+    const absent_days = history.filter(r => r.status === 'Absent').length;
+    const late_days = history.filter(r => r.status === 'Late').length;
+    const percentage = total_days > 0 ? ((present_days + late_days) / total_days) * 100.0 : 0.0;
+    return {{
+      success: true,
+      data: {{
+        student,
+        total_days,
+        present_days,
+        absent_days,
+        late_days,
+        percentage,
+        history
+      }}
+    }};
+  }},
+
+  async getAuditLog() {{
+    return {{ success: true, data: [
+      {{ timestamp: '2026-11-02 22:30:00', user: 'admin', action: 'User admin active on AttendX dashboard' }},
+      {{ timestamp: '2026-11-02 22:01:11', user: 'admin', action: 'User admin logged in successfully (admin)' }}
+    ] }};
+  }},
+
+  async getUsers() {{
+    return {{
+      success: true,
+      data: [
+        {{ username: 'admin', role: 'admin' }},
+        {{ username: 'teacher', role: 'teacher' }}
+      ]
+    }};
+  }},
+
+  async exportCSV(type = 'attendance') {{
+    let csv = '';
+    if (type === 'students') {{
+      csv = 'roll_no,name,section,email,phone,joined_on\\n' +
+        window.__ATTENDX_DATA__.students.map(s => `${{s.roll_no}},"${{s.name}}",${{s.section}},${{s.email}},${{s.phone}},${{s.joined_on}}`).join('\\n');
+    }} else {{
+      csv = 'date,roll_no,status,remarks\\n' +
+        window.__ATTENDX_DATA__.attendance.map(a => `${{a.date}},${{a.roll_no}},${{a.status}},"${{a.remarks}}"`).join('\\n');
+    }}
+    const blob = new Blob([csv], {{ type: 'text/csv' }});
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `attendx_${{type}}_export.csv`;
+    link.click();
+    return csv;
+  }}
+}};
+</script>
+"""
+
+# Replace local script tags with CDN Chart.js & Lucide + inlined logic
+scripts_replacement = f"""
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  {mock_api_script}
+  <script>
+{charts_js_content}
+  </script>
+  <script>
+{app_js_content}
+  </script>
+"""
+
+# Replace bottom script tags in HTML
+old_scripts = """  <script src="js/chart.umd.js"></script>
+  <script src="js/lucide.min.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>"""
+
+if old_scripts in html_bundle:
+    html_bundle = html_bundle.replace(old_scripts, scripts_replacement)
+else:
+    # Fallback tag replacement
+    html_bundle = html_bundle.replace('<script src="js/chart.umd.js"></script>', '<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>')
+    html_bundle = html_bundle.replace('<script src="js/lucide.min.js"></script>', '<script src="https://unpkg.com/lucide@latest"></script>' + mock_api_script)
+    html_bundle = html_bundle.replace('<script src="js/api.js"></script>', '')
+    html_bundle = html_bundle.replace('<script src="js/charts.js"></script>', f'<script>\n{charts_js_content}\n</script>')
+    html_bundle = html_bundle.replace('<script src="js/app.js"></script>', f'<script>\n{app_js_content}\n</script>')
+
+# Render the exact AttendX website natively inside Streamlit
+components.html(html_bundle, height=1050, scrolling=True)
