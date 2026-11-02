@@ -283,17 +283,82 @@ window.API = {{
     return {{ success: true, message: 'Student deleted successfully' }};
   }},
 
-  async getAttendance(params = {{}}) {{
-    let list = [...window.__ATTENDX_DATA__.attendance];
-    if (params.date) list = list.filter(r => r.date === params.date);
-    if (params.roll_no) list = list.filter(r => r.roll_no === params.roll_no);
-    return {{ success: true, data: list }};
+  async getAttendance(date, section = '') {{
+    let targetDate = (typeof date === 'string' && date) ? date : (date && date.date ? date.date : '2026-11-02');
+    let targetSec = (typeof section === 'string') ? section : (date && date.section ? date.section : 'all');
+    
+    const students = window.__ATTENDX_DATA__.students;
+    const allAttendance = window.__ATTENDX_DATA__.attendance;
+    const dateRecords = allAttendance.filter(r => r.date === targetDate);
+    const isRecorded = dateRecords.length > 0;
+
+    let filteredStudents = [...students];
+    if (targetSec && targetSec !== 'all' && targetSec !== 'All Sections') {{
+      filteredStudents = filteredStudents.filter(s => s.section.toLowerCase() === targetSec.toLowerCase());
+    }}
+
+    let present_count = 0, absent_count = 0, late_count = 0;
+    const records = filteredStudents.map(s => {{
+      const match = dateRecords.find(r => r.roll_no === s.roll_no);
+      const status = match ? match.status : 'Present';
+      const remarks = match ? match.remarks : 'Regular attendance';
+
+      if (status === 'Present') present_count++;
+      else if (status === 'Absent') absent_count++;
+      else if (status === 'Late') late_count++;
+
+      return {{
+        roll_no: s.roll_no,
+        name: s.name,
+        section: s.section,
+        status: status,
+        remarks: remarks
+      }};
+    }});
+
+    return {{
+      success: true,
+      message: 'Attendance data retrieved',
+      data: {{
+        date: targetDate,
+        is_recorded: isRecorded,
+        total_students: records.length,
+        present_count,
+        absent_count,
+        late_count,
+        records: records
+      }}
+    }};
   }},
 
   async saveAttendance(date, records) {{
     const existing = window.__ATTENDX_DATA__.attendance.filter(r => r.date !== date);
     records.forEach(r => existing.push({{ date, roll_no: r.roll_no, status: r.status, remarks: r.remarks || '' }}));
     window.__ATTENDX_DATA__.attendance = existing;
+
+    // Recalculate summary KPIs and sections so dashboard reflects new attendance
+    const today = '2026-11-02';
+    const students = window.__ATTENDX_DATA__.students;
+    const todayRecs = window.__ATTENDX_DATA__.attendance.filter(r => r.date === today);
+    const pToday = todayRecs.filter(r => r.status === 'Present').length;
+    const aToday = todayRecs.filter(r => r.status === 'Absent').length;
+    const lToday = todayRecs.filter(r => r.status === 'Late').length;
+    const totToday = pToday + aToday + lToday;
+
+    const totPresAll = window.__ATTENDX_DATA__.attendance.filter(r => r.status === 'Present').length;
+    const totLateAll = window.__ATTENDX_DATA__.attendance.filter(r => r.status === 'Late').length;
+    const totAll = window.__ATTENDX_DATA__.attendance.length;
+    const ovPct = totAll > 0 ? ((totPresAll + totLateAll) / totAll * 100.0) : 0.0;
+
+    window.__ATTENDX_DATA__.summary.kpi.present_today = pToday;
+    window.__ATTENDX_DATA__.summary.kpi.absent_today = aToday;
+    window.__ATTENDX_DATA__.summary.kpi.late_today = lToday;
+    window.__ATTENDX_DATA__.summary.kpi.total_today = totToday;
+    window.__ATTENDX_DATA__.summary.kpi.present_today_pct = totToday > 0 ? (pToday / totToday * 100.0) : 0.0;
+    window.__ATTENDX_DATA__.summary.kpi.absent_today_pct = totToday > 0 ? (aToday / totToday * 100.0) : 0.0;
+    window.__ATTENDX_DATA__.summary.kpi.late_today_pct = totToday > 0 ? (lToday / totToday * 100.0) : 0.0;
+    window.__ATTENDX_DATA__.summary.kpi.overall_percentage = Number(ovPct.toFixed(1));
+
     return {{ success: true, message: 'Attendance recorded successfully' }};
   }},
 

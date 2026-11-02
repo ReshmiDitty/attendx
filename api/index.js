@@ -285,12 +285,45 @@ module.exports = async (req, res) => {
     // 6. /api/attendance
     if (pathname === '/attendance') {
       if (req.method === 'GET') {
-        const date = parsedUrl.searchParams.get('date');
-        const roll = parsedUrl.searchParams.get('roll_no');
-        let records = [...cachedAttendance];
-        if (date) records = records.filter(r => r.date === date);
-        if (roll) records = records.filter(r => r.roll_no === roll);
-        return jsonSuccess(records, 'Attendance records retrieved');
+        const date = parsedUrl.searchParams.get('date') || '2026-11-02';
+        const section = parsedUrl.searchParams.get('section') || 'all';
+
+        const dateRecords = cachedAttendance.filter(r => r.date === date);
+        const isRecorded = dateRecords.length > 0;
+
+        let studentsList = [...cachedStudents];
+        if (section && section !== 'all' && section !== 'All Sections') {
+          studentsList = studentsList.filter(s => s.section.toLowerCase() === section.toLowerCase());
+        }
+
+        let presentCount = 0, absentCount = 0, lateCount = 0;
+        const records = studentsList.map(s => {
+          const match = dateRecords.find(r => r.roll_no === s.roll_no);
+          const status = match ? match.status : 'Present';
+          const remarks = match ? match.remarks : 'Regular attendance';
+
+          if (status === 'Present') presentCount++;
+          else if (status === 'Absent') absentCount++;
+          else if (status === 'Late') lateCount++;
+
+          return {
+            roll_no: s.roll_no,
+            name: s.name,
+            section: s.section,
+            status,
+            remarks
+          };
+        });
+
+        return jsonSuccess({
+          date,
+          is_recorded: isRecorded,
+          total_students: records.length,
+          present_count: presentCount,
+          absent_count: absentCount,
+          late_count: lateCount,
+          records
+        }, 'Attendance data retrieved');
       }
       if (req.method === 'POST') {
         const { date, records } = req.body || {};
