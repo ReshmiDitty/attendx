@@ -12,6 +12,10 @@ data/*_tmp.txt
 # Local IDE configuration
 .vscode/
 
+# Python Cache
+__pycache__/
+*.pyc
+
 # OS Artifacts
 .DS_Store
 Thumbs.db
