@@ -65,6 +65,7 @@ const App = {
 
     // Re-render charts with new theme colors
     if (this.state.currentPage === 'dashboard' && this.state.summaryData) {
+      this.updateTrendCalculations(this.state.trendDays);
       this.renderDashboardCharts();
     }
   },
@@ -129,7 +130,15 @@ const App = {
   },
 
   async handleLogout() {
-    await API.logout();
+    try {
+      await API.logout();
+    } catch (e) {
+      console.warn('Logout error:', e);
+    }
+    this.state.user = null;
+    this.showLogin();
+    const pwdInput = document.getElementById('login-password');
+    if (pwdInput) pwdInput.value = '';
     this.showToast('You have been logged out', 'info');
   },
 
@@ -215,6 +224,7 @@ const App = {
         }
       }
 
+      this.updateTrendCalculations(this.state.trendDays);
       this.renderDashboardCharts();
       this.renderLowAttendanceAlerts(res.data.low_attendance_alerts || []);
       this.renderActivityFeed(res.data.activity_feed || []);
@@ -305,10 +315,42 @@ const App = {
   setTrendDays(days) {
     this.state.trendDays = days;
     document.querySelectorAll('.btn-trend-toggle').forEach(btn => {
-      btn.classList.toggle('btn-primary', parseInt(btn.dataset.days) === days);
-      btn.classList.toggle('btn-secondary', parseInt(btn.dataset.days) !== days);
+      const bDays = parseInt(btn.dataset.days);
+      btn.classList.toggle('btn-primary', bDays === days);
+      btn.classList.toggle('btn-secondary', bDays !== days);
     });
+    this.updateTrendCalculations(days);
     this.renderDashboardCharts();
+  },
+
+  updateTrendCalculations(days) {
+    if (!this.state.summaryData || !this.state.summaryData.trend) return;
+    const trend = this.state.summaryData.trend;
+    const subset = trend.slice(-days);
+    if (subset.length === 0) return;
+
+    let totPres = 0, totAbs = 0, totLate = 0;
+    subset.forEach(d => {
+      totPres += (d.present || 0);
+      totAbs += (d.absent || 0);
+      totLate += (d.late || 0);
+    });
+    const total = totPres + totAbs + totLate;
+    const rate = total > 0 ? Number((((totPres + totLate) / total) * 100).toFixed(1)) : 0;
+
+    this.animateCount('kpi-overall-rate', rate, '%', 1);
+
+    const subEl = document.getElementById('kpi-overall-subtext');
+    if (subEl) {
+      subEl.textContent = (days === 7)
+        ? `Across last 7 calendar days (${days}D Avg)`
+        : `Across 30 calendar days (${days}D Avg)`;
+    }
+
+    const titleSub = document.getElementById('trend-chart-subtitle');
+    if (titleSub) {
+      titleSub.textContent = `Daily aggregate attendance trajectory (${days} Days View • ${rate}% Avg)`;
+    }
   },
 
   /* =========================================================================
@@ -1296,7 +1338,8 @@ const App = {
     });
 
     // Logout
-    document.getElementById('btn-logout')?.addEventListener('click', () => {
+    document.getElementById('btn-logout')?.addEventListener('click', (e) => {
+      if (e) e.preventDefault();
       this.handleLogout();
     });
 

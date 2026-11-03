@@ -131,7 +131,7 @@
             <div class="user-name" id="sidebar-user-name">admin</div>
             <div class="user-role" id="sidebar-user-role">ADMINISTRATOR</div>
           </div>
-          <button class="btn btn-ghost btn-sm" id="btn-logout" title="Sign out" style="padding: 0.25rem;">
+          <button type="button" class="btn btn-ghost btn-sm" id="btn-logout" title="Sign out" style="padding: 0.25rem;">
             <i data-lucide="log-out"></i>
           </button>
         </div>
@@ -198,7 +198,7 @@
                 <div class="kpi-icon-wrap"><i data-lucide="percent"></i></div>
               </div>
               <div class="kpi-value" id="kpi-overall-rate">0%</div>
-              <div class="kpi-subtext">Across 30 calendar days</div>
+              <div class="kpi-subtext" id="kpi-overall-subtext">Across 30 calendar days</div>
             </div>
           </div>
 
@@ -209,7 +209,7 @@
               <div class="card-header">
                 <div>
                   <h3 class="card-title"><i data-lucide="trending-up"></i> Attendance Trend</h3>
-                  <p class="card-subtitle">Daily aggregate attendance trajectory</p>
+                  <p class="card-subtitle" id="trend-chart-subtitle">Daily aggregate attendance trajectory</p>
                 </div>
                 <div style="display: flex; gap: 0.35rem;">
                   <button class="btn btn-sm btn-primary btn-trend-toggle" data-days="7" onclick="App.setTrendDays(7)">7 Days</button>

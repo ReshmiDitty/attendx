@@ -113,7 +113,6 @@ const API = {
     } finally {
       this.setToken(null);
       this.setUser(null);
-      window.dispatchEvent(new CustomEvent('attendx:unauthorized'));
     }
   },
 

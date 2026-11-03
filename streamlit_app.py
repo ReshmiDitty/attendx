@@ -66,16 +66,31 @@ def load_project_data():
             {"roll_no": "CS103", "name": "Rohan Verma", "section": "CS-A", "email": "rohan.verma@attendx.edu", "phone": "+91 98765 43212", "joined_on": "2026-08-01"},
             {"roll_no": "CS104", "name": "Diya Patel", "section": "CS-A", "email": "diya.patel@attendx.edu", "phone": "+91 98765 43213", "joined_on": "2026-08-01"},
             {"roll_no": "CS105", "name": "Kabir Khan", "section": "CS-A", "email": "kabir.khan@attendx.edu", "phone": "+91 98765 43214", "joined_on": "2026-08-01"},
+            {"roll_no": "CS106", "name": "Priyanka Das", "section": "CS-A", "email": "priyanka.das@attendx.edu", "phone": "+91 98765 43215", "joined_on": "2026-08-01"},
+            {"roll_no": "CS107", "name": "Siddharth Rao", "section": "CS-A", "email": "siddharth.rao@attendx.edu", "phone": "+91 98765 43216", "joined_on": "2026-08-01"},
+            {"roll_no": "CS108", "name": "Neha Kapoor", "section": "CS-A", "email": "neha.kapoor@attendx.edu", "phone": "+91 98765 43217", "joined_on": "2026-08-01"},
+            {"roll_no": "CS109", "name": "Aryan Saxena", "section": "CS-A", "email": "aryan.saxena@attendx.edu", "phone": "+91 98765 43218", "joined_on": "2026-08-01"},
+            {"roll_no": "CS110", "name": "Bhavna Mehta", "section": "CS-A", "email": "bhavna.mehta@attendx.edu", "phone": "+91 98765 43219", "joined_on": "2026-08-01"},
             {"roll_no": "CS201", "name": "Ishaan Roy", "section": "CS-B", "email": "ishaan.roy@attendx.edu", "phone": "+91 98765 43220", "joined_on": "2026-08-01"},
             {"roll_no": "CS202", "name": "Sneha Nair", "section": "CS-B", "email": "sneha.nair@attendx.edu", "phone": "+91 98765 43221", "joined_on": "2026-08-01"},
             {"roll_no": "CS203", "name": "Vikram Malhotra", "section": "CS-B", "email": "vikram.m@attendx.edu", "phone": "+91 98765 43222", "joined_on": "2026-08-01"},
             {"roll_no": "CS204", "name": "Pooja Reddy", "section": "CS-B", "email": "pooja.reddy@attendx.edu", "phone": "+91 98765 43223", "joined_on": "2026-08-01"},
             {"roll_no": "CS205", "name": "Aditya Joshi", "section": "CS-B", "email": "aditya.j@attendx.edu", "phone": "+91 98765 43224", "joined_on": "2026-08-01"},
+            {"roll_no": "CS206", "name": "Ritu Choudhary", "section": "CS-B", "email": "ritu.c@attendx.edu", "phone": "+91 98765 43225", "joined_on": "2026-08-01"},
+            {"roll_no": "CS207", "name": "Manan Shah", "section": "CS-B", "email": "manan.shah@attendx.edu", "phone": "+91 98765 43226", "joined_on": "2026-08-01"},
+            {"roll_no": "CS208", "name": "Shalini Tiwari", "section": "CS-B", "email": "shalini.t@attendx.edu", "phone": "+91 98765 43227", "joined_on": "2026-08-01"},
+            {"roll_no": "CS209", "name": "Kunal Singhania", "section": "CS-B", "email": "kunal.s@attendx.edu", "phone": "+91 98765 43228", "joined_on": "2026-08-01"},
+            {"roll_no": "CS210", "name": "Avani Mishra", "section": "CS-B", "email": "avani.m@attendx.edu", "phone": "+91 98765 43229", "joined_on": "2026-08-01"},
             {"roll_no": "IT301", "name": "Meera Kulkarni", "section": "IT-A", "email": "meera.k@attendx.edu", "phone": "+91 98765 43230", "joined_on": "2026-08-01"},
             {"roll_no": "IT302", "name": "Devendra Sen", "section": "IT-A", "email": "dev.sen@attendx.edu", "phone": "+91 98765 43231", "joined_on": "2026-08-01"},
             {"roll_no": "IT303", "name": "Tanya Gupta", "section": "IT-A", "email": "tanya.gupta@attendx.edu", "phone": "+91 98765 43232", "joined_on": "2026-08-01"},
             {"roll_no": "IT304", "name": "Farhan Sheikh", "section": "IT-A", "email": "farhan.s@attendx.edu", "phone": "+91 98765 43233", "joined_on": "2026-08-01"},
-            {"roll_no": "IT305", "name": "Rhea D'Souza", "section": "IT-A", "email": "rhea.dsouza@attendx.edu", "phone": "+91 98765 43234", "joined_on": "2026-08-01"}
+            {"roll_no": "IT305", "name": "Rhea D'Souza", "section": "IT-A", "email": "rhea.dsouza@attendx.edu", "phone": "+91 98765 43234", "joined_on": "2026-08-01"},
+            {"roll_no": "IT306", "name": "Yashwant Deshmukh", "section": "IT-A", "email": "yash.d@attendx.edu", "phone": "+91 98765 43235", "joined_on": "2026-08-01"},
+            {"roll_no": "IT307", "name": "Kriti Aggarwal", "section": "IT-A", "email": "kriti.a@attendx.edu", "phone": "+91 98765 43236", "joined_on": "2026-08-01"},
+            {"roll_no": "IT308", "name": "Nikhil Pillai", "section": "IT-A", "email": "nikhil.p@attendx.edu", "phone": "+91 98765 43237", "joined_on": "2026-08-01"},
+            {"roll_no": "IT309", "name": "Sakshi Bhatt", "section": "IT-A", "email": "sakshi.b@attendx.edu", "phone": "+91 98765 43238", "joined_on": "2026-08-01"},
+            {"roll_no": "IT310", "name": "Varun Chatterjee", "section": "IT-A", "email": "varun.c@attendx.edu", "phone": "+91 98765 43239", "joined_on": "2026-08-01"}
         ]
 
     # 2. Attendance
@@ -190,9 +205,27 @@ def load_project_data():
         "activity_feed": activity_feed
     }
 
+    # 4. Users
+    users = []
+    u_path = os.path.join(base_dir, "data", "users.txt")
+    if os.path.exists(u_path):
+        with open(u_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line: continue
+                p = line.split("|")
+                if len(p) >= 3:
+                    users.append({ "username": p[0], "role": p[2] })
+    if not users:
+        users = [
+            { "username": "admin", "role": "admin" },
+            { "username": "teacher", "role": "teacher" }
+        ]
+
     return {
         "students": students,
         "attendance": attendance,
+        "users": users,
         "summary": summary
     }
 
@@ -224,8 +257,8 @@ mock_api_script = f"""
 <script>
 window.__ATTENDX_DATA__ = {data_json};
 
-// Pre-authenticate as admin so dashboard loads immediately
-if (!localStorage.getItem('attendx_auth_token')) {{
+// Pre-authenticate as admin on first visit unless user explicitly logged out
+if (!localStorage.getItem('attendx_auth_token') && localStorage.getItem('attendx_logged_out') !== 'true') {{
   localStorage.setItem('attendx_auth_token', 'demo_admin_token_streamlit');
   localStorage.setItem('attendx_user', JSON.stringify({{ username: 'admin', role: 'admin' }}));
   localStorage.setItem('attendx_theme', 'light');
@@ -246,15 +279,19 @@ window.API = {{
 
   async login(username, password) {{
     const user = {{ username: username || 'admin', role: (username === 'teacher') ? 'teacher' : 'admin' }};
+    localStorage.removeItem('attendx_logged_out');
     this.setToken('session_' + Date.now());
     this.setUser(user);
     return {{ success: true, message: 'Logged in successfully', data: {{ token: this.getToken(), user }} }};
   }},
 
   async logout() {{
+    localStorage.setItem('attendx_logged_out', 'true');
     this.setToken(null);
     this.setUser(null);
-    window.location.reload();
+    if (window.App && typeof window.App.showLogin === 'function') {{
+      window.App.showLogin();
+    }}
   }},
 
   async getSummary() {{
@@ -394,11 +431,34 @@ window.API = {{
   async getUsers() {{
     return {{
       success: true,
-      data: [
+      data: window.__ATTENDX_DATA__.users || [
         {{ username: 'admin', role: 'admin' }},
         {{ username: 'teacher', role: 'teacher' }}
       ]
     }};
+  }},
+
+  async addUser(username, password, role) {{
+    if (!window.__ATTENDX_DATA__.users) {{
+      window.__ATTENDX_DATA__.users = [{{ username: 'admin', role: 'admin' }}];
+    }}
+    if (window.__ATTENDX_DATA__.users.some(u => u.username === username)) {{
+      throw new Error('Username already exists');
+    }}
+    const newUser = {{ username, role: role || 'teacher' }};
+    window.__ATTENDX_DATA__.users.push(newUser);
+    return {{ success: true, message: 'User created successfully', data: newUser }};
+  }},
+
+  async deleteUser(username) {{
+    if (username === 'admin') {{
+      throw new Error('Cannot delete protected root admin account');
+    }}
+    if (!window.__ATTENDX_DATA__.users) {{
+      window.__ATTENDX_DATA__.users = [];
+    }}
+    window.__ATTENDX_DATA__.users = window.__ATTENDX_DATA__.users.filter(u => u.username !== username);
+    return {{ success: true, message: 'User deleted successfully' }};
   }},
 
   async exportCSV(type = 'attendance') {{

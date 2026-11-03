@@ -44,10 +44,6 @@ const Charts = {
     const canvas = document.getElementById(canvasId);
     if (!canvas || !window.Chart) return;
 
-    if (this.trendChartInstance) {
-      this.trendChartInstance.destroy();
-    }
-
     const colors = this.getColors();
     const dataSubset = (trendData || []).slice(-daysLimit);
 
@@ -67,6 +63,19 @@ const Charts = {
       const total = (d.present || 0) + (d.absent || 0) + (d.late || 0);
       return total > 0 ? Number(((d.absent / total) * 100).toFixed(1)) : 0;
     });
+
+    // Smoothly update existing chart if already instantiated
+    if (this.trendChartInstance && this.trendChartInstance.ctx) {
+      this.trendChartInstance.data.labels = labels;
+      this.trendChartInstance.data.datasets[0].data = presentPcts;
+      this.trendChartInstance.data.datasets[1].data = absentPcts;
+      this.trendChartInstance.update();
+      return;
+    }
+
+    if (this.trendChartInstance) {
+      this.trendChartInstance.destroy();
+    }
 
     const ctx = canvas.getContext('2d');
 
