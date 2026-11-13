@@ -1,5 +1,9 @@
 import os
 import json
+import csv
+import io
+import shutil
+from datetime import datetime
 import streamlit as st
 import streamlit.components.v1 as components
 
@@ -514,3 +518,114 @@ else:
 
 # Render the exact AttendX website natively inside Streamlit
 components.html(html_bundle, height=1050, scrolling=True)
+
+# Streamlit's embedded website runs in an isolated browser frame. These native
+# controls provide durable server-side editing and downloads for the Streamlit
+# deployment instead of pretending that iframe memory/localStorage is storage.
+st.divider()
+st.title("Manage AttendX data")
+st.caption("Changes made here are written to the project data files. Each edit creates a timestamped backup.")
+
+def read_records(filename, minimum_fields):
+    path = os.path.join(base_dir, "data", filename)
+    result = []
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8") as source:
+            for line in source:
+                fields = line.rstrip("\r\n").split("|")
+                if len(fields) >= minimum_fields and fields[0]:
+                    result.append(fields)
+    return result
+
+def write_records(filename, records):
+    data_dir = os.path.join(base_dir, "data")
+    backup_dir = os.path.join(base_dir, "backups")
+    os.makedirs(data_dir, exist_ok=True)
+    os.makedirs(backup_dir, exist_ok=True)
+    target = os.path.join(data_dir, filename)
+    if os.path.exists(target):
+        stamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        shutil.copy2(target, os.path.join(backup_dir, f"{filename}_{stamp}.bak"))
+    temporary = target + ".tmp"
+    with open(temporary, "w", encoding="utf-8", newline="") as output:
+        for record in records:
+            if any("|" in str(value) or "\n" in str(value) for value in record):
+                raise ValueError("Values cannot contain pipe characters or newlines.")
+            output.write("|".join(str(value) for value in record) + "\n")
+        output.flush()
+        os.fsync(output.fileno())
+    os.replace(temporary, target)
+
+def csv_bytes(headers, records):
+    output = io.StringIO(newline="")
+    writer = csv.writer(output)
+    writer.writerow(headers)
+    writer.writerows(records)
+    return output.getvalue().encode("utf-8-sig")
+
+students_tab, roles_tab, reports_tab = st.tabs(["Students", "Roles", "Downloads & reports"])
+
+with students_tab:
+    student_rows = read_records("students.txt", 6)
+    students_by_roll = {row[0]: row for row in student_rows}
+    if not students_by_roll:
+        st.info("No students found in data/students.txt.")
+    else:
+        selected_roll = st.selectbox("Student", list(students_by_roll))
+        selected = students_by_roll[selected_roll]
+        with st.form("edit_student"):
+            name = st.text_input("Name", selected[1])
+            section = st.text_input("Section", selected[2])
+            email = st.text_input("Email", selected[3])
+            phone = st.text_input("Phone", selected[4])
+            joined_on = st.text_input("Joined on", selected[5])
+            submitted = st.form_submit_button("Save student changes", type="primary")
+        if submitted:
+            if not name.strip() or not section.strip():
+                st.error("Name and section are required.")
+            else:
+                student_rows = [([selected_roll, name.strip(), section.strip(), email.strip(), phone.strip(), joined_on.strip()] if row[0] == selected_roll else row) for row in student_rows]
+                write_records("students.txt", student_rows)
+                st.success("Student updated and saved to data/students.txt.")
+                st.rerun()
+
+with roles_tab:
+    user_rows = read_records("users.txt", 3)
+    removable = [row[0] for row in user_rows if row[0].lower() != "admin"]
+    if not removable:
+        st.info("There are no deletable non-admin accounts.")
+    else:
+        selected_user = st.selectbox("Account to delete", removable)
+        if st.button("Delete selected account", type="primary"):
+            write_records("users.txt", [row for row in user_rows if row[0] != selected_user])
+            st.success(f"Account {selected_user} deleted and saved.")
+            st.rerun()
+    st.caption("The protected admin account cannot be deleted.")
+
+with reports_tab:
+    student_rows = read_records("students.txt", 6)
+    attendance_rows = read_records("attendance.txt", 4)
+    st.download_button("Download students CSV", csv_bytes(
+        ["roll_no", "name", "section", "email", "phone", "joined_on"], student_rows
+    ), "attendx_students.csv", "text/csv")
+    st.download_button("Download attendance CSV", csv_bytes(
+        ["date", "roll_no", "status", "remarks"], attendance_rows
+    ), "attendx_attendance.csv", "text/csv")
+    attendance_by_roll = {}
+    for record in attendance_rows:
+        attendance_by_roll.setdefault(record[1], []).append(record)
+    report_rows = []
+    for student in student_rows:
+        history = attendance_by_roll.get(student[0], [])
+        present = sum(row[2] == "Present" for row in history)
+        absent = sum(row[2] == "Absent" for row in history)
+        late = sum(row[2] == "Late" for row in history)
+        total = len(history)
+        report_rows.append([student[0], student[1], student[2], total, present, absent, late,
+                            round((present + late) * 100 / total, 1) if total else 0.0])
+    st.download_button("Download attendance report CSV", csv_bytes(
+        ["roll_no", "name", "section", "total_days", "present_days", "absent_days", "late_days", "attendance_percent"], report_rows
+    ), "attendx_attendance_report.csv", "text/csv", type="primary")
+    st.dataframe(report_rows, column_config={
+        0: "Roll no", 1: "Name", 2: "Section", 3: "Days", 4: "Present", 5: "Absent", 6: "Late", 7: "Attendance %"
+    }, use_container_width=True, hide_index=True)
