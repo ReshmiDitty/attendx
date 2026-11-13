@@ -2,6 +2,7 @@ import os
 import json
 import csv
 import io
+import hashlib
 import shutil
 from datetime import datetime
 import streamlit as st
@@ -233,6 +234,91 @@ def load_project_data():
         "summary": summary
     }
 
+def read_records(filename, minimum_fields):
+    path = os.path.join(base_dir, "data", filename)
+    result = []
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8") as source:
+            for line in source:
+                fields = line.rstrip("\r\n").split("|")
+                if len(fields) >= minimum_fields and fields[0]:
+                    result.append(fields)
+    return result
+
+def write_records(filename, records):
+    data_dir = os.path.join(base_dir, "data")
+    backup_dir = os.path.join(base_dir, "backups")
+    os.makedirs(data_dir, exist_ok=True)
+    os.makedirs(backup_dir, exist_ok=True)
+    target = os.path.join(data_dir, filename)
+    if os.path.exists(target):
+        stamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        shutil.copy2(target, os.path.join(backup_dir, f"{filename}_{stamp}.bak"))
+    temporary = target + ".tmp"
+    with open(temporary, "w", encoding="utf-8", newline="") as output:
+        for record in records:
+            if any("|" in str(value) or "\n" in str(value) for value in record):
+                raise ValueError("Values cannot contain pipe characters or newlines.")
+            output.write("|".join(str(value) for value in record) + "\n")
+        output.flush()
+        os.fsync(output.fileno())
+    os.replace(temporary, target)
+
+def persist_iframe_action(action):
+    if not isinstance(action, dict):
+        return
+    kind = action.get("action")
+    payload = action.get("payload") or {}
+    if kind in ("addStudent", "updateStudent"):
+        student = payload.get("student") or {}
+        roll = str(student.get("roll_no", "")).strip()
+        if not roll or not str(student.get("name", "")).strip():
+            raise ValueError("Roll number and name are required.")
+        rows = read_records("students.txt", 6)
+        existing = next((current for current in rows if current[0] == roll), None)
+        row = [roll, student.get("name", ""), student.get("section", ""),
+               student.get("email", ""), student.get("phone", ""),
+               student.get("joined_on") or (existing[5] if existing else datetime.now().date().isoformat())]
+        found = False
+        for index, current in enumerate(rows):
+            if current[0] == roll:
+                rows[index] = row
+                found = True
+                break
+        if kind == "addStudent" and found:
+            raise ValueError(f"Student {roll} already exists.")
+        if kind == "updateStudent" and not found:
+            raise ValueError(f"Student {roll} was not found.")
+        if not found:
+            rows.append(row)
+        write_records("students.txt", rows)
+    elif kind == "deleteStudent":
+        roll = str(payload.get("roll", ""))
+        write_records("students.txt", [r for r in read_records("students.txt", 6) if r[0] != roll])
+        write_records("attendance.txt", [r for r in read_records("attendance.txt", 4) if r[1] != roll])
+    elif kind == "saveAttendance":
+        date = str(payload.get("date", ""))
+        records = payload.get("records") or []
+        if not date:
+            raise ValueError("Attendance date is required.")
+        rows = [r for r in read_records("attendance.txt", 4) if r[0] != date]
+        rows.extend([[date, r.get("roll_no", ""), r.get("status", "Present"), r.get("remarks", "")] for r in records])
+        write_records("attendance.txt", rows)
+    elif kind == "deleteUser":
+        username = str(payload.get("username", ""))
+        if username.lower() == "admin":
+            raise ValueError("Cannot delete the protected admin account.")
+        write_records("users.txt", [r for r in read_records("users.txt", 3) if r[0] != username])
+    elif kind == "addUser":
+        username, password, role = (str(payload.get(k, "")).strip() for k in ("username", "password", "role"))
+        rows = read_records("users.txt", 3)
+        if not username or not password:
+            raise ValueError("Username and password are required.")
+        if any(r[0].lower() == username.lower() for r in rows):
+            raise ValueError("Username already exists.")
+        password_hash = hashlib.sha256(f"AttendX_SecureSalt_v1:{password}".encode("utf-8")).hexdigest()
+        write_records("users.txt", rows + [[username, password_hash, role or "teacher"]])
+
 # Read frontend assets
 base_dir = os.path.dirname(os.path.abspath(__file__))
 with open(os.path.join(base_dir, "public", "index.html"), "r", encoding="utf-8") as f:
@@ -260,6 +346,9 @@ html_bundle = html_template.replace(
 mock_api_script = f"""
 <script>
 window.__ATTENDX_DATA__ = {data_json};
+window.__ATTENDX_SAVE__ = (action, payload) => window.parent.postMessage({{
+  type: 'attendx:action', value: {{ action, payload }}
+}}, '*');
 
 // Pre-authenticate as admin on first visit unless user explicitly logged out
 if (!localStorage.getItem('attendx_auth_token') && localStorage.getItem('attendx_logged_out') !== 'true') {{
@@ -307,11 +396,13 @@ window.API = {{
   }},
 
   async addStudent(s) {{
+    window.__ATTENDX_SAVE__('addStudent', {{ student: s }});
     window.__ATTENDX_DATA__.students.push(s);
     return {{ success: true, message: 'Student added successfully', data: s }};
   }},
 
   async updateStudent(roll, s) {{
+    window.__ATTENDX_SAVE__('updateStudent', {{ student: {{ ...s, roll_no: roll }} }});
     const idx = window.__ATTENDX_DATA__.students.findIndex(x => x.roll_no === roll);
     if (idx !== -1) {{
       window.__ATTENDX_DATA__.students[idx] = {{ ...window.__ATTENDX_DATA__.students[idx], ...s }};
@@ -320,6 +411,7 @@ window.API = {{
   }},
 
   async deleteStudent(roll) {{
+    window.__ATTENDX_SAVE__('deleteStudent', {{ roll }});
     window.__ATTENDX_DATA__.students = window.__ATTENDX_DATA__.students.filter(x => x.roll_no !== roll);
     return {{ success: true, message: 'Student deleted successfully' }};
   }},
@@ -373,6 +465,7 @@ window.API = {{
   }},
 
   async saveAttendance(date, records) {{
+    window.__ATTENDX_SAVE__('saveAttendance', {{ date, records }});
     const existing = window.__ATTENDX_DATA__.attendance.filter(r => r.date !== date);
     records.forEach(r => existing.push({{ date, roll_no: r.roll_no, status: r.status, remarks: r.remarks || '' }}));
     window.__ATTENDX_DATA__.attendance = existing;
@@ -443,6 +536,7 @@ window.API = {{
   }},
 
   async addUser(username, password, role) {{
+    window.__ATTENDX_SAVE__('addUser', {{ username, password, role }});
     if (!window.__ATTENDX_DATA__.users) {{
       window.__ATTENDX_DATA__.users = [{{ username: 'admin', role: 'admin' }}];
     }}
@@ -455,6 +549,7 @@ window.API = {{
   }},
 
   async deleteUser(username) {{
+    window.__ATTENDX_SAVE__('deleteUser', {{ username }});
     if (username === 'admin') {{
       throw new Error('Cannot delete protected root admin account');
     }}
@@ -516,8 +611,21 @@ else:
     html_bundle = html_bundle.replace('<script src="js/charts.js"></script>', f'<script>\n{charts_js_content}\n</script>')
     html_bundle = html_bundle.replace('<script src="js/app.js"></script>', f'<script>\n{app_js_content}\n</script>')
 
-# Render the exact AttendX website natively inside Streamlit
-components.html(html_bundle, height=1050, scrolling=True)
+# Render AttendX as a Streamlit component so browser actions can be committed by Python.
+component = components.declare_component(
+    "attendx_app", path=os.path.join(base_dir, "streamlit_component")
+)
+iframe_action = component(html=html_bundle, default=None, key="attendx_app")
+action_nonce = iframe_action.get("nonce") if isinstance(iframe_action, dict) else None
+if action_nonce and action_nonce != st.session_state.get("attendx_last_action_nonce"):
+    st.session_state["attendx_last_action_nonce"] = action_nonce
+    try:
+        persist_iframe_action(iframe_action)
+    except Exception as exc:
+        st.error(f"Could not save AttendX changes: {exc}")
+    else:
+        st.toast("Changes saved to the AttendX data files.", icon="✅")
+        st.rerun()
 
 # Streamlit's embedded website runs in an isolated browser frame. These native
 # controls provide durable server-side editing and downloads for the Streamlit
@@ -525,36 +633,6 @@ components.html(html_bundle, height=1050, scrolling=True)
 st.divider()
 st.title("Manage AttendX data")
 st.caption("Changes made here are written to the project data files. Each edit creates a timestamped backup.")
-
-def read_records(filename, minimum_fields):
-    path = os.path.join(base_dir, "data", filename)
-    result = []
-    if os.path.exists(path):
-        with open(path, "r", encoding="utf-8") as source:
-            for line in source:
-                fields = line.rstrip("\r\n").split("|")
-                if len(fields) >= minimum_fields and fields[0]:
-                    result.append(fields)
-    return result
-
-def write_records(filename, records):
-    data_dir = os.path.join(base_dir, "data")
-    backup_dir = os.path.join(base_dir, "backups")
-    os.makedirs(data_dir, exist_ok=True)
-    os.makedirs(backup_dir, exist_ok=True)
-    target = os.path.join(data_dir, filename)
-    if os.path.exists(target):
-        stamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-        shutil.copy2(target, os.path.join(backup_dir, f"{filename}_{stamp}.bak"))
-    temporary = target + ".tmp"
-    with open(temporary, "w", encoding="utf-8", newline="") as output:
-        for record in records:
-            if any("|" in str(value) or "\n" in str(value) for value in record):
-                raise ValueError("Values cannot contain pipe characters or newlines.")
-            output.write("|".join(str(value) for value in record) + "\n")
-        output.flush()
-        os.fsync(output.fileno())
-    os.replace(temporary, target)
 
 def csv_bytes(headers, records):
     output = io.StringIO(newline="")

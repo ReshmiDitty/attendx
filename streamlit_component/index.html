@@ -1,0 +1,26 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body,iframe{width:100%;height:100%;margin:0;border:0;display:block;overflow:hidden}</style></head>
+<body><iframe id="attendx" title="AttendX"></iframe>
+<script>
+const frame = document.getElementById('attendx');
+let lastValue = null;
+function send(message) {
+  window.parent.postMessage({isStreamlitMessage:true, ...message}, '*');
+}
+window.addEventListener('message', event => {
+  const message = event.data || {};
+  if (message.type === 'streamlit:render') {
+    const args = message.args || {};
+    if (typeof args.html === 'string') frame.srcdoc = args.html;
+  }
+  if (message.type === 'attendx:action') {
+    lastValue = {...message.value, nonce: Date.now()};
+    send({type:'streamlit:setComponentValue', value:lastValue, dataType:'json'});
+  }
+});
+frame.addEventListener('load', () => {
+  frame.contentWindow.postMessage({type:'attendx:ready'}, '*');
+});
+send({type:'streamlit:componentReady', apiVersion:1});
+send({type:'streamlit:setFrameHeight', height:1050});
+</script></body></html>
