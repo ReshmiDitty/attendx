@@ -1210,6 +1210,11 @@ const App = {
    * CSV Import & Export
    * ========================================================================= */
   triggerCSVExport(type) {
+    if (typeof window.__ATTENDX_DOWNLOAD__ === 'function') {
+      window.__ATTENDX_DOWNLOAD__(type);
+      this.showToast(`Downloading ${type} CSV...`, 'info');
+      return;
+    }
     const url = API.getExportUrl(type);
     window.open(url, '_blank');
     this.showToast(`Exporting ${type} CSV...`, 'info');

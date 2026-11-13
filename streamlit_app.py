@@ -359,25 +359,14 @@ def attendance_report_rows(student_rows, attendance_rows):
                             round((present + late) * 100 / total, 1) if total else 0.0])
     return report_rows
 
-# Keep native downloads above the embedded website so browser iframe download
-# restrictions cannot block CSV exports.
 students_for_export = read_records("students.txt", 6)
 attendance_for_export = read_records("attendance.txt", 4)
 reports_for_export = attendance_report_rows(students_for_export, attendance_for_export)
-st.subheader("Download data")
-download_col1, download_col2, download_col3 = st.columns(3)
-with download_col1:
-    st.download_button("Download students CSV", csv_bytes(
-        ["roll_no", "name", "section", "email", "phone", "joined_on"], students_for_export
-    ), "attendx_students.csv", "text/csv", use_container_width=True)
-with download_col2:
-    st.download_button("Download attendance CSV", csv_bytes(
-        ["date", "roll_no", "status", "remarks"], attendance_for_export
-    ), "attendx_attendance.csv", "text/csv", use_container_width=True)
-with download_col3:
-    st.download_button("Download attendance report CSV", csv_bytes(
-        ["roll_no", "name", "section", "total_days", "present_days", "absent_days", "late_days", "attendance_percent"], reports_for_export
-    ), "attendx_attendance_report.csv", "text/csv", type="primary", use_container_width=True)
+download_files = {
+    "students": csv_bytes(["roll_no", "name", "section", "email", "phone", "joined_on"], students_for_export).decode("utf-8-sig"),
+    "attendance": csv_bytes(["date", "roll_no", "status", "remarks"], attendance_for_export).decode("utf-8-sig"),
+    "report": csv_bytes(["roll_no", "name", "section", "total_days", "present_days", "absent_days", "late_days", "attendance_percent"], reports_for_export).decode("utf-8-sig"),
+}
 
 # Inject CSS directly into the HTML head
 html_bundle = html_template.replace(
@@ -391,6 +380,9 @@ mock_api_script = f"""
 window.__ATTENDX_DATA__ = {data_json};
 window.__ATTENDX_SAVE__ = (action, payload) => window.parent.postMessage({{
   type: 'attendx:action', value: {{ action, payload }}
+}}, '*');
+window.__ATTENDX_DOWNLOAD__ = (type) => window.parent.postMessage({{
+  type: 'attendx:download', value: {{ type }}
 }}, '*');
 
 // Pre-authenticate as admin on first visit unless user explicitly logged out
@@ -604,21 +596,8 @@ window.API = {{
   }},
 
   async exportCSV(type = 'attendance') {{
-    let csv = '';
-    if (type === 'students') {{
-      csv = 'roll_no,name,section,email,phone,joined_on\\n' +
-        window.__ATTENDX_DATA__.students.map(s => `${{s.roll_no}},"${{s.name}}",${{s.section}},${{s.email}},${{s.phone}},${{s.joined_on}}`).join('\\n');
-    }} else {{
-      csv = 'date,roll_no,status,remarks\\n' +
-        window.__ATTENDX_DATA__.attendance.map(a => `${{a.date}},${{a.roll_no}},${{a.status}},"${{a.remarks}}"`).join('\\n');
-    }}
-    const blob = new Blob([csv], {{ type: 'text/csv' }});
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `attendx_${{type}}_export.csv`;
-    link.click();
-    return csv;
+    window.__ATTENDX_DOWNLOAD__(type);
+    return {{ success: true, message: 'CSV download requested' }};
   }}
 }};
 </script>
@@ -658,7 +637,7 @@ else:
 component = components.declare_component(
     "attendx_app", path=os.path.join(base_dir, "streamlit_component")
 )
-iframe_action = component(html=html_bundle, default=None, key="attendx_app")
+iframe_action = component(html=html_bundle, downloads=download_files, default=None, key="attendx_app")
 action_nonce = iframe_action.get("nonce") if isinstance(iframe_action, dict) else None
 if action_nonce and action_nonce != st.session_state.get("attendx_last_action_nonce"):
     st.session_state["attendx_last_action_nonce"] = action_nonce
