@@ -54,3 +54,7 @@
 2026-11-03 12:29:42|admin|User logged out
 2026-11-03 12:29:44|admin|User admin logged in successfully (admin)
 2026-11-03 12:29:59|admin|Updated password for user admin
+2026-11-13 21:07:12|admin|User admin logged in successfully (admin)
+2026-11-13 21:07:27|admin|Updated student details for CS101
+2026-11-13 21:15:52|admin|User admin logged in successfully (admin)
+2026-11-13 21:16:07|teacher|User teacher logged in successfully (teacher)

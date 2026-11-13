@@ -11,6 +11,7 @@ const Charts = {
   trendChartInstance: null,
   sectionChartInstance: null,
   doughnutChartInstance: null,
+  forecastChartInstance: null,
 
   isDarkMode() {
     return document.documentElement.getAttribute('data-theme') === 'dark';
@@ -340,6 +341,168 @@ const Charts = {
                 const pct = total > 0 ? ((count / total) * 100).toFixed(1) : '0.0';
                 return ` ${ctx.label}: ${count} students (${pct}%)`;
               }
+            }
+          }
+        }
+      }
+    });
+  },
+
+  /* =========================================================================
+   * 4. Predictive Forecast & Trajectory Projection Chart
+   * ========================================================================= */
+  renderPredictiveForecastChart(canvasId, historicalTrend, projectedPct = 85.0, threshold = 75) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas || !window.Chart) return;
+
+    const colors = this.getColors();
+    const historySubset = (historicalTrend || []).slice(-8);
+
+    // Build labels: Historical dates + Future Projection checkpoints
+    const labels = historySubset.map(d => {
+      const parts = (d.date || '').split('-');
+      return parts.length >= 3 ? `${parts[1]}/${parts[2]}` : d.date;
+    });
+    const futureCheckpoints = ['+3 Classes', '+6 Classes', '+9 Classes', '+12 Classes', 'Final Term'];
+    futureCheckpoints.forEach(lbl => labels.push(lbl));
+
+    // Dataset 1: Actual Historical Rate
+    const actualData = historySubset.map(d => {
+      if (d.percentage !== undefined) return Number(d.percentage.toFixed(1));
+      return 0;
+    });
+    const lastActual = actualData.length > 0 ? actualData[actualData.length - 1] : 75.0;
+
+    // Pad actualData with nulls for future checkpoints
+    futureCheckpoints.forEach(() => actualData.push(null));
+
+    // Dataset 2: Forecast Trajectory (starts at last actual point)
+    const forecastData = [];
+    for (let i = 0; i < historySubset.length - 1; i++) {
+      forecastData.push(null);
+    }
+    forecastData.push(lastActual); // connect smoothly
+
+    // Interpolate smoothly towards projectedPct across future checkpoints
+    const steps = futureCheckpoints.length;
+    for (let i = 1; i <= steps; i++) {
+      const interp = lastActual + ((projectedPct - lastActual) * (i / steps));
+      forecastData.push(Number(interp.toFixed(1)));
+    }
+
+    // Dataset 3: Minimum Threshold benchmark line
+    const thresholdData = labels.map(() => Number(threshold));
+
+    // Smoothly update if existing
+    if (this.forecastChartInstance && this.forecastChartInstance.ctx) {
+      this.forecastChartInstance.data.labels = labels;
+      this.forecastChartInstance.data.datasets[0].data = actualData;
+      this.forecastChartInstance.data.datasets[1].data = forecastData;
+      this.forecastChartInstance.data.datasets[2].data = thresholdData;
+      this.forecastChartInstance.data.datasets[2].label = `Cutoff Threshold (${threshold}%)`;
+      this.forecastChartInstance.update();
+      return;
+    }
+
+    if (this.forecastChartInstance) {
+      this.forecastChartInstance.destroy();
+    }
+
+    const ctx = canvas.getContext('2d');
+    const actualGradient = ctx.createLinearGradient(0, 0, 0, 260);
+    actualGradient.addColorStop(0, colors.aquamarineGlow);
+    actualGradient.addColorStop(1, 'rgba(15, 63, 73, 0.0)');
+
+    this.forecastChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Actual Recorded Rate (%)',
+            data: actualData,
+            borderColor: colors.aquamarine,
+            backgroundColor: actualGradient,
+            borderWidth: 2.5,
+            fill: true,
+            tension: 0.3,
+            pointBackgroundColor: colors.aquamarine,
+            pointBorderColor: colors.cardBg,
+            pointBorderWidth: 2,
+            pointRadius: 4.5
+          },
+          {
+            label: 'Projected Trajectory (%)',
+            data: forecastData,
+            borderColor: '#2A9D8F',
+            backgroundColor: 'rgba(42, 157, 143, 0.05)',
+            borderWidth: 2.5,
+            borderDash: [6, 4],
+            fill: false,
+            tension: 0.25,
+            pointBackgroundColor: '#2A9D8F',
+            pointBorderColor: colors.cardBg,
+            pointBorderWidth: 2,
+            pointRadius: 4
+          },
+          {
+            label: `Cutoff Threshold (${threshold}%)`,
+            data: thresholdData,
+            borderColor: colors.burgundy,
+            borderWidth: 1.75,
+            borderDash: [4, 4],
+            fill: false,
+            pointRadius: 0,
+            pointHoverRadius: 0
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          mode: 'index',
+          intersect: false
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: {
+              color: colors.textColor,
+              font: { size: 11 }
+            }
+          },
+          y: {
+            min: 0,
+            max: 100,
+            grid: { color: colors.gridColor },
+            ticks: {
+              stepSize: 20,
+              color: colors.textColor,
+              callback: v => `${v}%`,
+              font: { size: 11 }
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              boxWidth: 14,
+              padding: 12,
+              color: colors.textColor,
+              font: { size: 11, weight: '600' }
+            }
+          },
+          tooltip: {
+            backgroundColor: colors.cardBg,
+            titleColor: colors.titleColor,
+            bodyColor: colors.textColor,
+            borderColor: colors.gridColor,
+            borderWidth: 1,
+            padding: 10,
+            callbacks: {
+              label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y !== null ? ctx.parsed.y + '%' : 'N/A'}`
             }
           }
         }

@@ -29,7 +29,17 @@ const App = {
     // Reports state
     reportsList: [],
     reportSectionFilter: 'all',
-    reportSearch: ''
+    reportSearch: '',
+
+    // Predictive Analytics state
+    predictiveThreshold: 75,
+    predictiveLatePolicy: 0.5,
+    predictiveRiskFilter: 'all',
+    predictiveSearch: '',
+    predictiveSectionFilter: 'all',
+    predictiveAlertFilter: 'active',
+    predictiveList: [],
+    reviewedAlerts: JSON.parse(localStorage.getItem('attendx_reviewed_alerts') || '[]')
   },
 
   init() {
@@ -166,6 +176,7 @@ const App = {
         students: 'Student Directory',
         attendance: 'Mark Attendance',
         reports: 'Attendance Analytics & Reports',
+        predictive: 'Predictive Attendance Analytics',
         settings: 'System & Admin Settings'
       };
       breadcrumb.textContent = titles[page] || page;
@@ -180,6 +191,7 @@ const App = {
       case 'students': this.loadStudents(); break;
       case 'attendance': this.loadAttendancePage(); break;
       case 'reports': this.loadReports(); break;
+      case 'predictive': this.loadPredictive(); break;
       case 'settings': this.loadSettings(); break;
     }
 
@@ -1426,7 +1438,567 @@ const App = {
         if (e.target === modal) modal.classList.remove('active');
       });
     });
-  }
+  },
+
+  /* =========================================================================
+   * Predictive Attendance Analytics Module
+   * ========================================================================= */
+  async loadPredictive() {
+    try {
+      const sRes = await API.getStudents();
+      const students = sRes.data || [];
+      const threshold = this.state.predictiveThreshold;
+      const latePolicy = this.state.predictiveLatePolicy;
+
+      // Populate what-if student selector if empty
+      const selectEl = document.getElementById('whatif-student-select');
+      if (selectEl && selectEl.options.length <= 1) {
+        students.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s.roll_no;
+          opt.textContent = `${s.roll_no} - ${s.name} (${s.section})`;
+          selectEl.appendChild(opt);
+        });
+      }
+
+      // Compute predictive metrics for all students
+      const predictiveList = [];
+      let totalConductedCohort = 0;
+      let totalPresentCohort = 0;
+      let totalAbsentCohort = 0;
+      let totalLateCohort = 0;
+
+      for (const s of students) {
+        try {
+          const r = await API.getStudentReport(s.roll_no);
+          const data = r.data || {};
+          const total = data.total_days || 0;
+          const pres = data.present_days || 0;
+          const abs = data.absent_days || 0;
+          const late = data.late_days || 0;
+          const history = data.history || [];
+
+          totalConductedCohort += total;
+          totalPresentCohort += pres;
+          totalAbsentCohort += abs;
+          totalLateCohort += late;
+
+          // Effective present based on late policy
+          const effPresent = pres + (latePolicy * late);
+          const currentPct = total > 0 ? (effPresent / total) * 100 : 0.0;
+
+          // Extra consecutive absences cushion
+          let maxAbsencesAllowed = 0;
+          const threshDec = threshold / 100.0;
+          if (total >= 5 && currentPct >= threshold) {
+            maxAbsencesAllowed = Math.floor((effPresent - (threshDec * total)) / threshDec);
+            if (maxAbsencesAllowed < 0) maxAbsencesAllowed = 0;
+          }
+
+          // Historical vs Recent Trend
+          const recent10 = history.slice(-10);
+          let recentPres = 0;
+          recent10.forEach(h => {
+            if (h.status === 'Present') recentPres += 1.0;
+            else if (h.status === 'Late') recentPres += latePolicy;
+          });
+          const recentRate = recent10.length > 0 ? (recentPres / recent10.length) : (currentPct / 100.0);
+          const histRate = total > 0 ? (effPresent / total) : (currentPct / 100.0);
+          const predRate = (0.65 * recentRate) + (0.35 * histRate);
+
+          const upcomingN = 15;
+          const predFuturePres = Math.round(predRate * upcomingN);
+          const projectedPct = (total + upcomingN) > 0
+            ? ((effPresent + predFuturePres) / (total + upcomingN)) * 100
+            : currentPct;
+
+          // Risk Category
+          let risk = 'low';
+          let riskLabel = 'Low Risk';
+          let riskBadgeClass = 'badge-present';
+          let alertTrigger = null;
+          let alertReason = '';
+          let alertAction = '';
+
+          // Check declining in last 5
+          const last5 = history.slice(-5);
+          const missedLast5 = last5.filter(h => h.status === 'Absent' || h.status === 'Late').length;
+
+          if (total < 5) {
+            risk = 'insufficient';
+            riskLabel = 'Needs Data';
+            riskBadgeClass = 'badge-neutral';
+            alertTrigger = 'insufficient';
+            alertReason = `Only ${total} attendance record(s) on file. Minimum 5 required for statistical confidence.`;
+            alertAction = 'Record initial cohort attendance to establish statistical baseline.';
+          } else if (currentPct < threshold) {
+            risk = 'high';
+            riskLabel = 'High Risk';
+            riskBadgeClass = 'badge-critical';
+            alertTrigger = 'critical';
+            alertReason = `Current attendance of ${currentPct.toFixed(1)}% is ${(threshold - currentPct).toFixed(1)}% below the mandatory ${threshold}% threshold.`;
+            alertAction = 'Mandate academic advisor counseling and issue formal attendance warning letter.';
+          } else if (currentPct < (threshold + 10.0) || maxAbsencesAllowed <= 2) {
+            risk = 'moderate';
+            riskLabel = 'Moderate Risk';
+            riskBadgeClass = 'badge-late';
+            alertTrigger = 'approaching';
+            alertReason = `Attendance ${currentPct.toFixed(1)}% is within ${maxAbsencesAllowed} absence(s) of breaching the ${threshold}% threshold.`;
+            alertAction = 'Issue proactive attendance alert and assign peer study mentor.';
+          } else if (missedLast5 >= 3) {
+            risk = 'moderate';
+            riskLabel = 'Moderate (Declining)';
+            riskBadgeClass = 'badge-late';
+            alertTrigger = 'declining';
+            alertReason = `Recent attendance drop: Missed ${missedLast5} of the last 5 sessions despite overall ${currentPct.toFixed(1)}%.`;
+            alertAction = 'Conduct informal check-in to identify potential medical/personal difficulties.';
+          } else {
+            risk = 'low';
+            riskLabel = 'Low Risk';
+            riskBadgeClass = 'badge-present';
+          }
+
+          // Reliability Level
+          let reliability = 'High';
+          let reliabilityBadgeClass = 'badge-present';
+          if (total < 5) {
+            reliability = 'Insufficient Data';
+            reliabilityBadgeClass = 'badge-neutral';
+          } else if (total < 10) {
+            reliability = 'Low';
+            reliabilityBadgeClass = 'badge-late';
+          } else if (total < 25) {
+            reliability = 'Medium';
+            reliabilityBadgeClass = 'badge-neutral';
+          }
+
+          // Explainable Why text
+          let whyText = '';
+          if (total < 5) {
+            whyText = `Classified as Insufficient Data because the student has only ${total} session(s) recorded. A minimum sample size of 5 conducted classes is required to evaluate moving averages or trend directions with mathematical validity.`;
+          } else if (risk === 'high') {
+            whyText = `Classified as High Risk because the student's current effective rate of ${currentPct.toFixed(1)}% is below the ${threshold}% requirement. With ${upcomingN} sessions remaining, the projected final rate is ${projectedPct.toFixed(1)}%, requiring immediate intervention to prevent semester debarment.`;
+          } else if (risk === 'moderate') {
+            whyText = `Classified as Moderate Risk because the student has an absence cushion of ${maxAbsencesAllowed} class(es). A small cluster of absences would quickly push them below the ${threshold}% threshold. Recent 10-session trend slope indicates ${recentRate > histRate ? 'improving' : 'declining'} consistency.`;
+          } else {
+            whyText = `Classified as Low Risk with a safe attendance rate of ${currentPct.toFixed(1)}% (well above the ${threshold}% threshold). The student has a cushion of ${maxAbsencesAllowed} consecutive missed classes before reaching the warning zone. Historical trajectory remains highly consistent.`;
+          }
+
+          let recAction = '';
+          if (risk === 'high') recAction = 'Immediate faculty advisor interview & warning notice';
+          else if (risk === 'moderate') recAction = 'Proactive monitoring & attendance advisory alert';
+          else if (risk === 'insufficient') recAction = 'Collect more session data (5 minimum)';
+          else recAction = 'Maintain regular attendance consistency';
+
+          predictiveList.push({
+            student: s,
+            total,
+            present: pres,
+            absent: abs,
+            late,
+            effPresent,
+            currentPct,
+            projectedPct,
+            maxAbsencesAllowed,
+            risk,
+            riskLabel,
+            riskBadgeClass,
+            reliability,
+            reliabilityBadgeClass,
+            whyText,
+            recAction,
+            alertTrigger,
+            alertReason,
+            alertAction
+          });
+        } catch (e) {
+          console.warn('Student predictive error:', e);
+        }
+      }
+
+      this.state.predictiveList = predictiveList;
+      this.renderPredictiveFacultyInsights();
+      this.renderPredictiveAlerts();
+      this.renderPredictiveTable();
+
+      const avgProjected = predictiveList.length > 0
+        ? predictiveList.reduce((acc, cur) => acc + cur.projectedPct, 0) / predictiveList.length
+        : 85.0;
+
+      const trend = (this.state.summaryData && this.state.summaryData.trend)
+        ? this.state.summaryData.trend
+        : [];
+
+      Charts.renderPredictiveForecastChart('predictive-forecast-chart', trend, avgProjected, threshold);
+      this.runWhatIfCalculation();
+    } catch (err) {
+      console.error(err);
+      this.showToast('Failed to load predictive analytics', 'error');
+    }
+  },
+
+  renderPredictiveFacultyInsights() {
+    const list = this.state.predictiveList || [];
+    const total = list.length;
+    const high = list.filter(x => x.risk === 'high').length;
+    const mod = list.filter(x => x.risk === 'moderate').length;
+    const low = list.filter(x => x.risk === 'low').length;
+
+    this.animateCount('pred-kpi-monitored', total);
+    this.animateCount('pred-kpi-high-risk', high);
+    this.animateCount('pred-kpi-moderate-risk', mod);
+    this.animateCount('pred-kpi-low-risk', low);
+  },
+
+  renderPredictiveAlerts() {
+    const container = document.getElementById('pred-alerts-container');
+    if (!container) return;
+
+    const list = this.state.predictiveList;
+    const filter = this.state.predictiveAlertFilter;
+    const reviewed = new Set(this.state.reviewedAlerts);
+
+    const alerts = [];
+    list.forEach(item => {
+      if (item.alertTrigger) {
+        const alertId = `${item.student.roll_no}_${item.alertTrigger}`;
+        alerts.push({
+          id: alertId,
+          student: item.student,
+          pct: item.currentPct,
+          risk: item.risk,
+          riskLabel: item.riskLabel,
+          riskBadgeClass: item.riskBadgeClass,
+          type: item.alertTrigger,
+          reason: item.alertReason,
+          action: item.alertAction,
+          isReviewed: reviewed.has(alertId)
+        });
+      }
+    });
+
+    const activeCount = alerts.filter(a => !a.isReviewed).length;
+    const reviewedCount = alerts.filter(a => a.isReviewed).length;
+    document.getElementById('pred-alerts-active-count').textContent = activeCount;
+    document.getElementById('pred-alerts-reviewed-count').textContent = reviewedCount;
+    document.getElementById('pred-alerts-all-count').textContent = alerts.length;
+    document.getElementById('pred-kpi-active-warnings').textContent = activeCount;
+
+    let displayAlerts = alerts;
+    if (filter === 'active') displayAlerts = alerts.filter(a => !a.isReviewed);
+    else if (filter === 'reviewed') displayAlerts = alerts.filter(a => a.isReviewed);
+
+    if (displayAlerts.length === 0) {
+      container.innerHTML = `<div style="grid-column: 1 / -1; padding: 2rem; text-align: center; color: var(--text-muted);">
+        <i data-lucide="check-circle" style="width: 32px; height: 32px; color: var(--success); margin-bottom: 0.5rem;"></i>
+        <div>No ${filter} early warning alerts found.</div>
+      </div>`;
+      if (window.lucide) window.lucide.createIcons();
+      return;
+    }
+
+    let html = '';
+    displayAlerts.forEach(a => {
+      html += `
+        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-left: 4px solid ${a.risk === 'high' ? 'var(--bordo)' : (a.risk === 'moderate' ? 'var(--warning)' : 'var(--primary)')}; border-radius: 0 var(--radius-lg) var(--radius-lg) 0; padding: 1rem; box-shadow: var(--shadow-sm);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+            <div>
+              <div style="font-weight: 700; font-size: 0.95rem;">${this.escapeHtml(a.student.name)}</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">${this.escapeHtml(a.student.roll_no)} • ${this.escapeHtml(a.student.section)}</div>
+            </div>
+            <span class="badge ${a.riskBadgeClass}">${a.pct.toFixed(1)}%</span>
+          </div>
+
+          <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.65rem; line-height: 1.4;">
+            <strong>Signal:</strong> ${this.escapeHtml(a.reason)}
+          </div>
+
+          <div style="font-size: 0.775rem; background: var(--bg-subtle); padding: 0.45rem 0.65rem; border-radius: var(--radius-sm); margin-bottom: 0.75rem;">
+            <strong>Intervention:</strong> ${this.escapeHtml(a.action)}
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <button class="btn btn-ghost btn-sm" style="font-size: 0.75rem; padding: 0.2rem 0.5rem;" onclick="App.openPredictiveProfile('${a.student.roll_no}')">
+              <i data-lucide="eye" style="width: 13px; height: 13px;"></i> View Profile
+            </button>
+            <button class="btn ${a.isReviewed ? 'btn-secondary' : 'btn-outline'} btn-sm" style="font-size: 0.75rem; padding: 0.2rem 0.65rem;" onclick="App.toggleAlertReviewed('${a.id}')">
+              <i data-lucide="${a.isReviewed ? 'check' : 'bookmark'}" style="width: 13px; height: 13px;"></i> ${a.isReviewed ? 'Reviewed' : 'Mark as Reviewed'}
+            </button>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+    if (window.lucide) window.lucide.createIcons();
+  },
+
+  toggleAlertReviewed(alertId) {
+    const list = this.state.reviewedAlerts || [];
+    const idx = list.indexOf(alertId);
+    if (idx === -1) {
+      list.push(alertId);
+      this.showToast('Alert marked as reviewed', 'success');
+    } else {
+      list.splice(idx, 1);
+      this.showToast('Alert unmarked', 'info');
+    }
+    this.state.reviewedAlerts = list;
+    localStorage.setItem('attendx_reviewed_alerts', JSON.stringify(list));
+    this.renderPredictiveAlerts();
+  },
+
+  renderPredictiveTable() {
+    const tbody = document.getElementById('pred-table-body');
+    if (!tbody) return;
+
+    let list = this.state.predictiveList || [];
+    const rf = this.state.predictiveRiskFilter;
+    const sec = this.state.predictiveSectionFilter;
+    const q = (this.state.predictiveSearch || '').toLowerCase().trim();
+
+    document.getElementById('pred-filter-all-count').textContent = list.length;
+    document.getElementById('pred-filter-high-count').textContent = list.filter(x => x.risk === 'high').length;
+    document.getElementById('pred-filter-mod-count').textContent = list.filter(x => x.risk === 'moderate').length;
+    document.getElementById('pred-filter-low-count').textContent = list.filter(x => x.risk === 'low').length;
+    document.getElementById('pred-filter-insuf-count').textContent = list.filter(x => x.risk === 'insufficient').length;
+
+    if (rf !== 'all') {
+      list = list.filter(x => x.risk === rf);
+    }
+    if (sec !== 'all') {
+      list = list.filter(x => x.student.section === sec);
+    }
+    if (q) {
+      list = list.filter(x =>
+        x.student.name.toLowerCase().includes(q) ||
+        x.student.roll_no.toLowerCase().includes(q)
+      );
+    }
+
+    if (list.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="12" class="empty-state">No matching student records found</td></tr>';
+      return;
+    }
+
+    let html = '';
+    list.forEach(item => {
+      const s = item.student;
+      html += `
+        <tr>
+          <td><span class="student-roll">${this.escapeHtml(s.roll_no)}</span></td>
+          <td style="font-weight: 600;">${this.escapeHtml(s.name)}</td>
+          <td><span class="badge badge-section">${this.escapeHtml(s.section)}</span></td>
+          <td>${item.total}</td>
+          <td style="color: var(--success); font-weight: 600;">${item.present}</td>
+          <td style="color: var(--danger); font-weight: 600;">${item.absent}</td>
+          <td><span class="badge ${item.riskBadgeClass}" style="font-size: 0.825rem;">${item.currentPct.toFixed(1)}%</span></td>
+          <td style="font-weight: 700; color: var(--primary);">${item.projectedPct.toFixed(1)}%</td>
+          <td><span class="badge ${item.riskBadgeClass}">${item.riskLabel}</span></td>
+          <td><strong>${item.total < 5 ? 'N/A' : item.maxAbsencesAllowed + ' classes'}</strong></td>
+          <td style="font-size: 0.8rem; color: var(--text-secondary); max-width: 200px;">${this.escapeHtml(item.recAction)}</td>
+          <td>
+            <button class="btn btn-ghost btn-sm" onclick="App.openPredictiveProfile('${s.roll_no}')" title="View Detailed Profile">
+              <i data-lucide="line-chart"></i> View
+            </button>
+          </td>
+        </tr>
+      `;
+    });
+
+    tbody.innerHTML = html;
+    if (window.lucide) window.lucide.createIcons();
+  },
+
+  openPredictiveProfile(rollNo) {
+    const item = this.state.predictiveList.find(x => x.student.roll_no === rollNo);
+    if (!item) return;
+
+    document.getElementById('pred-modal-student-name').textContent = item.student.name;
+    document.getElementById('pred-modal-student-meta').textContent = `${item.student.roll_no} • Section ${item.student.section} • ${item.student.email}`;
+    document.getElementById('pred-modal-current-pct').textContent = `${item.currentPct.toFixed(1)}%`;
+    document.getElementById('pred-modal-projected-pct').textContent = `${item.projectedPct.toFixed(1)}%`;
+    document.getElementById('pred-modal-risk-badge').innerHTML = `<span class="badge ${item.riskBadgeClass}">${item.riskLabel}</span>`;
+    document.getElementById('pred-modal-reliability-badge').innerHTML = `<span class="badge ${item.reliabilityBadgeClass}">${item.reliability}</span>`;
+    document.getElementById('pred-modal-conducted').textContent = item.total;
+    document.getElementById('pred-modal-present').textContent = item.present;
+    document.getElementById('pred-modal-absent').textContent = item.absent;
+    document.getElementById('pred-modal-late').textContent = item.late;
+    document.getElementById('pred-modal-cushion').textContent = `${item.maxAbsencesAllowed} consecutive classes`;
+    document.getElementById('pred-modal-why-text').textContent = item.whyText;
+    document.getElementById('pred-modal-action-text').innerHTML = `
+      <ul style="padding-left: 1.25rem; margin: 0; line-height: 1.6;">
+        <li><strong>Primary Action:</strong> ${this.escapeHtml(item.recAction)}</li>
+        <li><strong>Early Alert Advisory:</strong> ${this.escapeHtml(item.alertAction || 'Continue routine attendance monitoring.')}</li>
+        <li><strong>Threshold Cushion:</strong> Student can afford at most <strong>${item.maxAbsencesAllowed}</strong> more unexcused absence(s) before dropping below the ${this.state.predictiveThreshold}% minimum requirement.</li>
+      </ul>
+    `;
+
+    this.openModal('modal-predictive-profile');
+    if (window.lucide) window.lucide.createIcons();
+  },
+
+  handlePredictiveConfigChange() {
+    const threshEl = document.getElementById('pred-threshold-select');
+    const lateEl = document.getElementById('pred-late-policy-select');
+    if (threshEl) this.state.predictiveThreshold = parseFloat(threshEl.value);
+    if (lateEl) this.state.predictiveLatePolicy = parseFloat(lateEl.value);
+
+    const lbl = document.getElementById('pred-chart-threshold-label');
+    if (lbl) lbl.textContent = `Cutoff: ${this.state.predictiveThreshold}%`;
+
+    this.loadPredictive();
+  },
+
+  filterPredictiveRisk(risk) {
+    this.state.predictiveRiskFilter = risk;
+    document.querySelectorAll('.btn-pred-risk-filter').forEach(btn => {
+      btn.classList.toggle('btn-primary', btn.dataset.risk === risk);
+      btn.classList.toggle('btn-secondary', btn.dataset.risk !== risk);
+    });
+    this.renderPredictiveTable();
+  },
+
+  handlePredictiveSearch(e) {
+    this.state.predictiveSearch = e.target.value;
+    this.renderPredictiveTable();
+  },
+
+  handlePredictiveSectionFilter(e) {
+    this.state.predictiveSectionFilter = e.target.value;
+    this.renderPredictiveTable();
+  },
+
+  setPredictiveAlertFilter(tab) {
+    this.state.predictiveAlertFilter = tab;
+    document.querySelectorAll('.btn-pred-alert-tab').forEach(btn => {
+      btn.classList.toggle('btn-primary', btn.dataset.tab === tab);
+      btn.classList.toggle('btn-secondary', btn.dataset.tab !== tab);
+    });
+    this.renderPredictiveAlerts();
+  },
+
+  handleWhatIfStudentSelected(e) {
+    const roll = e.target.value;
+    if (!roll) return;
+    const item = this.state.predictiveList.find(x => x.student.roll_no === roll);
+    if (!item) return;
+
+    document.getElementById('whatif-total').value = item.total;
+    document.getElementById('whatif-present').value = item.present;
+    document.getElementById('whatif-upcoming').value = 15;
+    document.getElementById('whatif-expected').value = Math.min(15, Math.round((item.currentPct / 100) * 15));
+    this.runWhatIfCalculation();
+  },
+
+  runWhatIfCalculation() {
+    const totalInput = document.getElementById('whatif-total');
+    const presInput = document.getElementById('whatif-present');
+    const upInput = document.getElementById('whatif-upcoming');
+    const expInput = document.getElementById('whatif-expected');
+    const errEl = document.getElementById('whatif-error');
+    const impossibleEl = document.getElementById('whatif-impossible-alert');
+
+    if (!totalInput || !presInput || !upInput || !expInput) return;
+
+    const T = parseInt(totalInput.value, 10);
+    const P = parseInt(presInput.value, 10);
+    const N = parseInt(upInput.value, 10);
+    const F = parseInt(expInput.value, 10);
+    const R = this.state.predictiveThreshold || 75;
+
+    let errorMsg = '';
+    if (isNaN(T) || isNaN(P) || isNaN(N) || isNaN(F)) {
+      errorMsg = 'Please enter valid integer numbers for all fields.';
+    } else if (T < 0 || P < 0 || N < 0 || F < 0) {
+      errorMsg = 'Negative numbers are not allowed.';
+    } else if (P > T) {
+      errorMsg = 'Present classes (P) cannot exceed conducted classes (T).';
+    } else if (F > N) {
+      errorMsg = 'Expected attendance (F) cannot exceed upcoming classes (N).';
+    }
+
+    if (errorMsg) {
+      if (errEl) { errEl.textContent = errorMsg; errEl.style.display = 'block'; }
+      return;
+    } else {
+      if (errEl) errEl.style.display = 'none';
+    }
+
+    const currentPct = T > 0 ? (P / T) * 100 : 0.0;
+    const projectedPct = (T + N) > 0 ? ((P + F) / (T + N)) * 100 : 0.0;
+
+    const reqNumerator = (R * (T + N)) - (100 * P);
+    const reqClasses = Math.ceil(reqNumerator / 100.0);
+
+    const isMeets = projectedPct >= R;
+    const isImpossible = reqClasses > N;
+
+    let maxMissable = 0;
+    if (!isImpossible) {
+      maxMissable = N - Math.max(0, reqClasses);
+    }
+
+    const curEl = document.getElementById('whatif-current-pct');
+    if (curEl) curEl.textContent = `${currentPct.toFixed(1)}%`;
+
+    const projEl = document.getElementById('whatif-projected-pct');
+    if (projEl) {
+      projEl.textContent = `${projectedPct.toFixed(1)}%`;
+      projEl.style.color = isMeets ? 'var(--success)' : 'var(--danger)';
+    }
+
+    const badgeEl = document.getElementById('whatif-status-badge');
+    if (badgeEl) {
+      badgeEl.className = `badge ${isMeets ? 'badge-present' : 'badge-critical'}`;
+      badgeEl.textContent = isMeets ? `Meets Goal (≥${R}%)` : `Below Goal (<${R}%)`;
+    }
+
+    const reqEl = document.getElementById('whatif-req-classes');
+    if (reqEl) {
+      if (isImpossible) {
+        reqEl.textContent = `Impossible (${reqClasses} > ${N})`;
+        reqEl.style.color = 'var(--danger)';
+      } else if (reqClasses <= 0) {
+        reqEl.textContent = '0 (Already secured)';
+        reqEl.style.color = 'var(--success)';
+      } else {
+        reqEl.textContent = `${reqClasses} of ${N} classes`;
+        reqEl.style.color = 'var(--text-primary)';
+      }
+    }
+
+    const missEl = document.getElementById('whatif-max-missable');
+    if (missEl) {
+      if (isImpossible) {
+        missEl.textContent = '0 (Cannot miss any)';
+        missEl.style.color = 'var(--danger)';
+      } else {
+        missEl.textContent = `${maxMissable} class${maxMissable === 1 ? '' : 'es'}`;
+        missEl.style.color = maxMissable > 0 ? 'var(--text-primary)' : 'var(--danger)';
+      }
+    }
+
+    if (impossibleEl) {
+      impossibleEl.style.display = isImpossible ? 'block' : 'none';
+    }
+  },
+
+  exportPredictiveCSV() {
+    const list = this.state.predictiveList || [];
+    let csv = 'roll_no,name,section,conducted,present,absent,late,current_pct,projected_pct,risk_category,reliability,absence_cushion,alert_reason,recommended_action\n';
+    list.forEach(x => {
+      csv += `${x.student.roll_no},"${x.student.name}",${x.student.section},${x.total},${x.present},${x.absent},${x.late},${x.currentPct.toFixed(1)},${x.projectedPct.toFixed(1)},${x.riskLabel},${x.reliability},${x.maxAbsencesAllowed},"${(x.alertReason || 'None').replace(/"/g, '""')}","${x.recAction.replace(/"/g, '""')}"\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `attendx_predictive_analytics_${Date.now()}.csv`;
+    link.click();
+    this.showToast('Predictive Analytics CSV exported successfully', 'success');
+  },
+
 };
 
 // Initialize App when DOM is loaded

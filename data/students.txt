@@ -1,4 +1,4 @@
-CS101|Aarav Sharma|CS-A|aarav.sharma@attendx.edu|+91 98765 43210|2026-08-01
+CS101|Dittyyyy|CS-A|aarav.sharma@attendx.edu|+91 98765 43210|2026-08-01
 CS102|Ananya Iyer|CS-A|ananya.iyer@attendx.edu|+91 98765 43211|2026-08-01
 CS103|Rohan Verma|CS-A|rohan.verma@attendx.edu|+91 98765 43212|2026-08-01
 CS104|Diya Patel|CS-A|diya.patel@attendx.edu|+91 98765 43213|2026-08-01
