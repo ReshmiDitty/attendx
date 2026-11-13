@@ -34,7 +34,8 @@ st.markdown("""
     padding: 0 !important;
     margin: 0 !important;
     max-width: 100vw !important;
-    height: 100vh !important;
+    min-height: 100vh !important;
+    height: auto !important;
   }
   iframe {
     width: 100vw !important;
@@ -336,6 +337,48 @@ with open(os.path.join(base_dir, "public", "js", "app.js"), "r", encoding="utf-8
 project_data = load_project_data()
 data_json = json.dumps(project_data)
 
+def csv_bytes(headers, records):
+    output = io.StringIO(newline="")
+    writer = csv.writer(output)
+    writer.writerow(headers)
+    writer.writerows(records)
+    return output.getvalue().encode("utf-8-sig")
+
+def attendance_report_rows(student_rows, attendance_rows):
+    attendance_by_roll = {}
+    for record in attendance_rows:
+        attendance_by_roll.setdefault(record[1], []).append(record)
+    report_rows = []
+    for student in student_rows:
+        history = attendance_by_roll.get(student[0], [])
+        present = sum(row[2] == "Present" for row in history)
+        absent = sum(row[2] == "Absent" for row in history)
+        late = sum(row[2] == "Late" for row in history)
+        total = len(history)
+        report_rows.append([student[0], student[1], student[2], total, present, absent, late,
+                            round((present + late) * 100 / total, 1) if total else 0.0])
+    return report_rows
+
+# Keep native downloads above the embedded website so browser iframe download
+# restrictions cannot block CSV exports.
+students_for_export = read_records("students.txt", 6)
+attendance_for_export = read_records("attendance.txt", 4)
+reports_for_export = attendance_report_rows(students_for_export, attendance_for_export)
+st.subheader("Download data")
+download_col1, download_col2, download_col3 = st.columns(3)
+with download_col1:
+    st.download_button("Download students CSV", csv_bytes(
+        ["roll_no", "name", "section", "email", "phone", "joined_on"], students_for_export
+    ), "attendx_students.csv", "text/csv", use_container_width=True)
+with download_col2:
+    st.download_button("Download attendance CSV", csv_bytes(
+        ["date", "roll_no", "status", "remarks"], attendance_for_export
+    ), "attendx_attendance.csv", "text/csv", use_container_width=True)
+with download_col3:
+    st.download_button("Download attendance report CSV", csv_bytes(
+        ["roll_no", "name", "section", "total_days", "present_days", "absent_days", "late_days", "attendance_percent"], reports_for_export
+    ), "attendx_attendance_report.csv", "text/csv", type="primary", use_container_width=True)
+
 # Inject CSS directly into the HTML head
 html_bundle = html_template.replace(
     '<link rel="stylesheet" href="css/style.css">',
@@ -634,13 +677,6 @@ st.divider()
 st.title("Manage AttendX data")
 st.caption("Changes made here are written to the project data files. Each edit creates a timestamped backup.")
 
-def csv_bytes(headers, records):
-    output = io.StringIO(newline="")
-    writer = csv.writer(output)
-    writer.writerow(headers)
-    writer.writerows(records)
-    return output.getvalue().encode("utf-8-sig")
-
 students_tab, roles_tab, reports_tab = st.tabs(["Students", "Roles", "Downloads & reports"])
 
 with students_tab:
@@ -681,29 +717,6 @@ with roles_tab:
     st.caption("The protected admin account cannot be deleted.")
 
 with reports_tab:
-    student_rows = read_records("students.txt", 6)
-    attendance_rows = read_records("attendance.txt", 4)
-    st.download_button("Download students CSV", csv_bytes(
-        ["roll_no", "name", "section", "email", "phone", "joined_on"], student_rows
-    ), "attendx_students.csv", "text/csv")
-    st.download_button("Download attendance CSV", csv_bytes(
-        ["date", "roll_no", "status", "remarks"], attendance_rows
-    ), "attendx_attendance.csv", "text/csv")
-    attendance_by_roll = {}
-    for record in attendance_rows:
-        attendance_by_roll.setdefault(record[1], []).append(record)
-    report_rows = []
-    for student in student_rows:
-        history = attendance_by_roll.get(student[0], [])
-        present = sum(row[2] == "Present" for row in history)
-        absent = sum(row[2] == "Absent" for row in history)
-        late = sum(row[2] == "Late" for row in history)
-        total = len(history)
-        report_rows.append([student[0], student[1], student[2], total, present, absent, late,
-                            round((present + late) * 100 / total, 1) if total else 0.0])
-    st.download_button("Download attendance report CSV", csv_bytes(
-        ["roll_no", "name", "section", "total_days", "present_days", "absent_days", "late_days", "attendance_percent"], report_rows
-    ), "attendx_attendance_report.csv", "text/csv", type="primary")
-    st.dataframe(report_rows, column_config={
+    st.dataframe(reports_for_export, column_config={
         0: "Roll no", 1: "Name", 2: "Section", 3: "Days", 4: "Present", 5: "Absent", 6: "Late", 7: "Attendance %"
     }, use_container_width=True, hide_index=True)
